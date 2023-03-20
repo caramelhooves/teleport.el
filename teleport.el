@@ -272,6 +272,7 @@ asynchronously and returns cached results."
 
 (defun teleport-mode--reset-columns-and-refresh()
   """Restore the columns to the default value and refreshes the buffer """
+  (interactive)
   (setq tabulated-list-format nil)
   (teleport-mode--refresh))
 
