@@ -62,7 +62,6 @@ called"
 (defun teleport--tsh-sentinel (process event)
   "Sentinel for caching tsh commands output process. Stores JSON
 parsed output in `(process-set process :output-json-symbol)'"
-  (print "teleport--tsh-sentinel")
   (with-current-buffer (process-buffer process)
     (cond
      ((string= event "finished\n")
