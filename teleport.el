@@ -324,10 +324,8 @@ asynchronously and returns cached results."
 (defun teleport-list-hosts ()
   "List all teleport nodes."
   (interactive)
-  (let ((buffer (get-buffer-create teleport-list-buffer-name)))
-    (with-current-buffer buffer
-      (teleport-list-hosts-mode)
-      (switch-to-buffer buffer))))
+  (switch-to-buffer teleport-list-buffer-name)
+  (teleport-list-hosts-mode))
 
 (provide 'teleport)
 ;;; teleport.el ends here
