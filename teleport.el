@@ -94,12 +94,20 @@ parsed output in `(process-set process :output-json-symbol)'"
       (when (re-search-forward (car prompt) nil t)
         (funcall (cdr prompt) (process-get process :main-process))))))
 
+(defun teleport--tsh-stderr-sentinel (process event)
+  (with-current-buffer (process-buffer process)
+    (cond
+     ((string= event "finished\n")
+      (kill-buffer (current-buffer)))
+     (t (message "Teleport stderr helper process failed: %s, %s" event (buffer-string))))))
+
 (defun teleport--tsh-cmd-async (output-json-symbol process-symbol completion-notification &rest cmd)
   "Start 'cmd' asynchronously and stores the output in `output-symbol'."
   (let ((output-buffer (generate-new-buffer "*tsh-cmd-async*" t))
         (stderr-process (make-pipe-process :name "tsh-cmd-async-stderr-process"
                                           :buffer (generate-new-buffer "*tsh-cmd-async-stderr*")
                                           :filter #'teleport--tsh-stderr-filter
+                                          :sentinel #'teleport--tsh-stderr-sentinel
                                           )))
     (let ((process
            (make-process :name (symbol-name process-symbol)
