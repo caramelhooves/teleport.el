@@ -277,11 +277,10 @@ asynchronously and returns cached results."
   (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer)
   (teleport-list--update-modeline))
 
-(defun teleport-list-nodes-mode--reset-columns-and-refresh()
-  "Restore the columns to the default (teleport-list-nodes-fields) value and refreshes the list of teleport nodes"
+(defun teleport-list-nodes-mode--reset-columns()
+  "Restore the columns to the default (teleport-list-nodes-fields) value"
   (interactive)
-  (setq tabulated-list-format nil)
-  (teleport-list-nodes-mode--refresh))
+  (setq tabulated-list-format nil))
 
 (defvar teleport-list-nodes-mode-map
         (let ((map (make-sparse-keymap)))
@@ -290,7 +289,7 @@ asynchronously and returns cached results."
           (define-key map "t" 'teleport-list-nodes-mode--open-vterm)
           (define-key map "d" 'teleport-list-nodes-mode--open-dired)
           (define-key map "g" 'teleport-list-nodes-mode--refresh)
-          (define-key map "G" 'teleport-list-nodes-mode--reset-columns-and-refresh)
+          (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
           (define-key map (kbd "RET") 'teleport-list-nodes-mode--open-dired)
           (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
         map))
