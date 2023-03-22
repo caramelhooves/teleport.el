@@ -86,7 +86,6 @@ parsed output in `(process-set process :output-json-symbol)'"
   (process-send-string tsh-process (format "%s\n" (read-passwd (buffer-string)))))
 
 (defun teleport--tsh-stderr-filter (process output)
-  (message "Teleport process stderr: %s" output)
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
     (insert output)
@@ -217,7 +216,6 @@ asynchronously and returns cached results."
 
 (defun teleport-mode--kill-column ()
   (interactive)
-  (message "column name %s" (teleport-list-hosts--column-name))
   (setq tabulated-list-format (cl-delete (teleport-list-hosts--column-name) tabulated-list-format :key #'car :test #'string= :count 1))
   (setq tabulated-list-entries
                   (teleport-list--hosts-mode-entries teleport--hosts-completion-async-cache (mapcar #'car tabulated-list-format)))
