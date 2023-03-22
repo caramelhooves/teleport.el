@@ -321,6 +321,7 @@ asynchronously and returns cached results."
   (teleport-list--refresh-buffer)
   (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer))
 
+;;;###autoload
 (defun teleport-list-nodes ()
   "List all teleport nodes."
   (interactive)
