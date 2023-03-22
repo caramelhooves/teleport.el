@@ -272,12 +272,13 @@ asynchronously and returns cached results."
       (teleport-list--update-modeline)))
 
 (defun teleport-mode--refresh ()
+  "Refresh the list of teleport nodes"
   (interactive)
   (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer)
   (teleport-list--update-modeline))
 
 (defun teleport-mode--reset-columns-and-refresh()
-  """Restore the columns to the default value and refreshes the buffer """
+  "Restore the columns to the default value and refreshes the list of teleport nodes"
   (interactive)
   (setq tabulated-list-format nil)
   (teleport-mode--refresh))
@@ -321,6 +322,7 @@ asynchronously and returns cached results."
   (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer))
 
 (defun teleport-list-hosts ()
+  "List all teleport nodes."
   (interactive)
   (let ((buffer (get-buffer-create teleport-list-buffer-name)))
     (with-current-buffer buffer
