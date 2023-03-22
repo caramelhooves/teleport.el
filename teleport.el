@@ -19,18 +19,18 @@
 (require 'dired)
 (require 'vterm)
 
-(defcustom teleport-list-fields nil
-"Columns to display in the teleport list buffer, nil means all"
+(defcustom teleport-list-nodes-fields nil
+"Columns to display in the teleport node list buffer, nil means all"
 :group 'teleport
 :type '(repeat string))
 
-(defcustom teleport-list-fields-width 20
+(defcustom teleport-list-nodes-fields-width 20
 "Default width of each column in the teleport list buffer"
 :group 'teleport
 :type 'integer)
 
-(defcustom teleport-list-buffer-name "*Teleport Host List*"
-  "Name of the teleport list buffer"
+(defcustom teleport-list-nodes-buffer-name "*Teleport Nodes List*"
+  "Name of the teleport node list buffer"
   :group 'teleport
   :type 'string)
 
@@ -137,29 +137,29 @@ parsed output in `(process-set process :output-json-symbol)'"
         (apply #'teleport--tsh-cmd-async output-json-symbol process-symbol completion-notification cmd)))
   (symbol-value output-json-symbol))
 
-(defvar teleport--hosts-completion-async-cache []
-  "Cached vector of teleport hosts")
+(defvar teleport--nodes-async-cache []
+  "Cached vector of teleport nodes")
 
-(defvar teleport--hosts-completion-async-process nil
+(defvar teleport--nodes-async-process nil
   "Background process for async completion")
 
-(defun teleport--get-hosts-async-cached (&optional completion-notification)
+(defun teleport--get-nodes-async-cached (&optional completion-notification)
   "Returns cached list of teleport hosts"
-  (teleport--tsh-cmd-async-cached 'teleport--hosts-completion-async-cache
-                                  'teleport--hosts-completion-async-process
+  (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
+                                  'teleport--nodes-async-process
                                   completion-notification
                                   "tsh" "ls" "-f" "json"))
 
-(defvar teleport--logins-completion-async-cache '(nil)
+(defvar teleport--logins-async-cache '(nil)
   "Cached hashtable of available teleport hosts")
 
-(defvar teleport--logins-completion-async-process nil
+(defvar teleport--logins-async-process nil
   "Background process for async completion")
 
 (defun teleport--status-completion-async-cached (&optional completion-notification)
   "Returns cached list of logins avaialable"
-  (teleport--tsh-cmd-async-cached 'teleport--logins-completion-async-cache
-                                  'teleport--logins-completion-async-process
+  (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
+                                  'teleport--logins-async-process
                                   completion-notification
                                   "tsh" "status" "-f" "json"))
 
@@ -183,7 +183,6 @@ asynchronously and returns cached results."
         for host across hosts
         for host-name = (gethash "name" (gethash "metadata" host))
         append (mapcar (lambda (login) (list login host-name)) logins))))
-
 
 (with-eval-after-load 'tramp
   (teleport-tramp-add-method)
@@ -222,21 +221,22 @@ asynchronously and returns cached results."
 (defun teleport-list-hosts--column-name ()
   (get-text-property (point) 'tabulated-list-column-name))
 
-(defun teleport-mode--kill-column ()
+(defun teleport-list-nodes-mode--kill-column ()
+  ""
   (interactive)
   (setq tabulated-list-format (cl-delete (teleport-list-hosts--column-name) tabulated-list-format :key #'car :test #'string= :count 1))
   (setq tabulated-list-entries
-                  (teleport-list--hosts-mode-entries teleport--hosts-completion-async-cache (mapcar #'car tabulated-list-format)))
+                  (teleport-list--hosts-mode-entries teleport--nodes-async-cache (mapcar #'car tabulated-list-format)))
   (tabulated-list-init-header)
   (tabulated-list-print t)
   )
 
-(defun teleport-mode--open-dired ()
+(defun teleport-list-nodes-mode--open-dired ()
   (interactive)
   (dired (format "/%s:root@%s:" teleport-tramp-method (tabulated-list-get-id)))
   )
 
-(defun teleport-mode--open-vterm (&optional arg)
+(defun teleport-list-nodes-mode--open-vterm (&optional arg)
   (interactive "P")
   """ Open a vterm in the current host. ARG has the same meaning as in `vterm' """
   (let ((default-directory (format "/%s:root@%s:" teleport-tramp-method (tabulated-list-get-id))))
@@ -263,35 +263,35 @@ asynchronously and returns cached results."
 (defun teleport-list--refresh-buffer ()
   (with-current-buffer (get-buffer-create teleport-list-buffer-name)
     (when (seq-empty-p tabulated-list-format)
-      (setq tabulated-list-format (teleport-list--calculate-list-format teleport--hosts-completion-async-cache))
+      (setq tabulated-list-format (teleport-list--calculate-list-format teleport--nodes-async-cache))
       (tabulated-list-init-header))
 
-      (setq tabulated-list-entries (teleport-list--hosts-mode-entries teleport--hosts-completion-async-cache (mapcar #'car tabulated-list-format)))
+      (setq tabulated-list-entries (teleport-list--hosts-mode-entries teleport--nodes-async-cache (mapcar #'car tabulated-list-format)))
 
       (tabulated-list-print t)
       (teleport-list--update-modeline)))
 
-(defun teleport-mode--refresh ()
+(defun teleport-list-nodes-mode--refresh ()
   "Refresh the list of teleport nodes"
   (interactive)
   (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer)
   (teleport-list--update-modeline))
 
-(defun teleport-mode--reset-columns-and-refresh()
-  "Restore the columns to the default value and refreshes the list of teleport nodes"
+(defun teleport-list-nodes-mode--reset-columns-and-refresh()
+  "Restore the columns to the default (teleport-list-nodes-fields) value and refreshes the list of teleport nodes"
   (interactive)
   (setq tabulated-list-format nil)
-  (teleport-mode--refresh))
+  (teleport-list-nodes-mode--refresh))
 
-(defvar teleport-list-hosts-mode-map
+(defvar teleport-list-nodes-mode-map
         (let ((map (make-sparse-keymap)))
           (set-keymap-parent map tabulated-list-mode-map)
-          (define-key map "k" 'teleport-mode--kill-column)
-          (define-key map "t" 'teleport-mode--open-vterm)
-          (define-key map "d" 'teleport-mode--open-dired)
-          (define-key map "g" 'teleport-mode--refresh)
-          (define-key map "G" 'teleport-mode--reset-columns-and-refresh)
-          (define-key map (kbd "RET") 'teleport-mode--open-dired)
+          (define-key map "k" 'teleport-list-nodes-mode--kill-column)
+          (define-key map "t" 'teleport-list-nodes-mode--open-vterm)
+          (define-key map "d" 'teleport-list-nodes-mode--open-dired)
+          (define-key map "g" 'teleport-list-nodes-mode--refresh)
+          (define-key map "G" 'teleport-list-nodes-mode--reset-columns-and-refresh)
+          (define-key map (kbd "RET") 'teleport-list-nodes-mode--open-dired)
           (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
         map))
 
@@ -306,11 +306,11 @@ asynchronously and returns cached results."
   )
 
 (defun teleport-list--update-modeline()
-  (setq mode-line-process (format "%s%s" (if (process-live-p teleport--hosts-completion-async-process) ":Hosts" "")
-                                  (if (process-live-p teleport--logins-completion-async-cache)":Logins" "")))
+  (setq mode-line-process (format "%s%s" (if (process-live-p teleport--nodes-async-process) ":Hosts" "")
+                                  (if (process-live-p teleport--logins-async-cache)":Logins" "")))
   (force-mode-line-update t))
 
-(define-derived-mode teleport-list-hosts-mode tabulated-list-mode "Teleport Nodes"
+(define-derived-mode teleport-list-nodes-mode tabulated-list-mode "Teleport Nodes"
   "Major mode for listing the available teleport hosts.
 \\<teleport-mode-map>
 \\{teleport-mode-map}"
@@ -321,11 +321,11 @@ asynchronously and returns cached results."
   (teleport-list--refresh-buffer)
   (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer))
 
-(defun teleport-list-hosts ()
+(defun teleport-list-nodes ()
   "List all teleport nodes."
   (interactive)
   (switch-to-buffer teleport-list-buffer-name)
-  (teleport-list-hosts-mode))
+  (teleport-list-nodes-mode))
 
 (provide 'teleport)
 ;;; teleport.el ends here
