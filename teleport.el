@@ -111,7 +111,8 @@ parsed output in `(process-set process :output-json-symbol)'"
                (buffer-string))))))
 
 (defun teleport--tsh-cmd-async
-    (output-json-symbol process-symbol completion-notification &rest cmd)
+    (output-json-symbol
+     process-symbol completion-notification &rest cmd)
   "Start 'cmd' asynchronously and stores the output in `output-symbol'."
   (let ((output-buffer (generate-new-buffer "*tsh-cmd-async*" t))
         (stderr-process
@@ -131,12 +132,15 @@ parsed output in `(process-set process :output-json-symbol)'"
             :stderr stderr-process
             :noquery t)))
       (process-put process :output-json-symbol output-json-symbol)
-      (process-put process :completion-notification completion-notification)
+      (process-put
+       process
+       :completion-notification completion-notification)
       (process-put stderr-process :main-process process)
       (set process-symbol process))))
 
 (defun teleport--tsh-cmd-async-cached
-    (output-json-symbol process-symbol completion-notification &rest cmd)
+    (output-json-symbol
+     process-symbol completion-notification &rest cmd)
   "Start 'cmd' asynchronously if it is not running"
 
   (if (not (boundp process-symbol))
@@ -162,7 +166,8 @@ parsed output in `(process-set process :output-json-symbol)'"
 (defvar teleport--nodes-async-process nil
   "Background process for async completion")
 
-(defun teleport--get-nodes-async-cached (&optional completion-notification)
+(defun teleport--get-nodes-async-cached
+    (&optional completion-notification)
   "Returns cached list of teleport hosts"
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
@@ -198,7 +203,9 @@ parsed output in `(process-set process :output-json-symbol)'"
   (when status
     (let ((logins (gethash "logins" (gethash "active" status))))
       (seq-remove
-       (lambda (login) (string= teleport--internal-join-login login)) logins))))
+       (lambda (login)
+         (string= teleport--internal-join-login login))
+       logins))))
 
 (defun teleport-tramp-completion (&optional _)
   "Return list of tramp completion. The function runs
@@ -223,7 +230,8 @@ asynchronously and returns cached results."
   (tramp-set-completion-function
    teleport-tramp-method '((teleport-tramp-completion ""))))
 
-(defun teleport--completion-annotation-all-fields (metadata &optional prefix)
+(defun teleport--completion-annotation-all-fields
+    (metadata &optional prefix)
   "Format an annotation string by printing all fields in METADATA."
   ;(format " cmd_labels: %s" cmd_labels))
   (cl-loop
@@ -241,7 +249,9 @@ asynchronously and returns cached results."
    if
    (hash-table-p value)
    concat
-   (teleport--completion-annotation-all-fields value (concat prefix key "."))
+   (teleport--completion-annotation-all-fields value
+                                               (concat
+                                                prefix key "."))
    else
    concat
    (format "%s%s: %s, " prefix key value)))
@@ -259,15 +269,18 @@ asynchronously and returns cached results."
   (let* ((fields
           (list
            (teleport--completion-format-field '("addr") metadata)
-           (teleport--completion-format-field '("hostname") metadata)))
+           (teleport--completion-format-field
+            '("hostname") metadata)))
          (cmd_labels_metadata (gethash "cmd_labels" metadata))
          (cmd_labels
           (--map
            (format "%s: %s"
                    it
-                   (gethash "result" (gethash it cmd_labels_metadata)))
+                   (gethash
+                    "result" (gethash it cmd_labels_metadata)))
            (hash-table-keys cmd_labels_metadata))))
-    (string-join (-remove #'string-empty-p (nconc fields cmd_labels)) ", ")))
+    (string-join (-remove #'string-empty-p (nconc fields cmd_labels))
+                 ", ")))
 
 (defun teleport-list-hosts--column-name ()
   (get-text-property (point) 'tabulated-list-column-name))
@@ -276,19 +289,25 @@ asynchronously and returns cached results."
   ""
   (interactive)
   (setq tabulated-list-format
-        (cl-delete (teleport-list-hosts--column-name) tabulated-list-format
-                   :key #'car
-                   :test #'string=
-                   :count 1))
+        (cl-delete
+         (teleport-list-hosts--column-name)
+         tabulated-list-format
+         :key #'car
+         :test #'string=
+         :count 1))
   (setq tabulated-list-entries
         (teleport-list--hosts-mode-entries
-         teleport--nodes-async-cache (mapcar #'car tabulated-list-format)))
+         teleport--nodes-async-cache
+         (mapcar #'car tabulated-list-format)))
   (tabulated-list-init-header)
   (tabulated-list-print t))
 
 (defun teleport-list-nodes-mode--open-dired ()
   (interactive)
-  (dired (format "/%s:root@%s:" teleport-tramp-method (tabulated-list-get-id))))
+  (dired
+   (format "/%s:root@%s:"
+           teleport-tramp-method
+           (tabulated-list-get-id))))
 
 (defun teleport-list-nodes-mode--open-vterm (&optional arg)
   (interactive "P")
@@ -296,7 +315,9 @@ asynchronously and returns cached results."
   " Open a vterm in the current host. ARG has the same meaning as in `vterm' "
   ""
   (let ((default-directory
-         (format "/%s:root@%s:" teleport-tramp-method (tabulated-list-get-id))))
+         (format "/%s:root@%s:"
+                 teleport-tramp-method
+                 (tabulated-list-get-id))))
     (vterm arg)))
 
 
@@ -331,22 +352,26 @@ asynchronously and returns cached results."
        =
        (hash-table-keys (gethash "cmd_labels" spec))
        do
-       (setq list-format (cl-union list-format cmd_labels :test #'string=))))
+       (setq list-format
+             (cl-union list-format cmd_labels :test #'string=))))
     (apply #'vector
            (mapcar
-            (lambda (name) (list name teleport-list-fields-width nil))
+            (lambda (name)
+              (list name teleport-list-fields-width nil))
             list-format))))
 
 (defun teleport-list--refresh-buffer ()
   (with-current-buffer (get-buffer-create teleport-list-buffer-name)
     (when (seq-empty-p tabulated-list-format)
       (setq tabulated-list-format
-            (teleport-list--calculate-list-format teleport--nodes-async-cache))
+            (teleport-list--calculate-list-format
+             teleport--nodes-async-cache))
       (tabulated-list-init-header))
 
     (setq tabulated-list-entries
           (teleport-list--hosts-mode-entries
-           teleport--nodes-async-cache (mapcar #'car tabulated-list-format)))
+           teleport--nodes-async-cache
+           (mapcar #'car tabulated-list-format)))
 
     (tabulated-list-print t)
     (teleport-list--update-modeline)))
@@ -402,7 +427,8 @@ asynchronously and returns cached results."
     (apply #'vector
            (mapcar
             (lambda (name)
-              (gethash "result" (gethash name cmd_labels empty-entry) ""))
+              (gethash "result" (gethash name cmd_labels empty-entry)
+                       ""))
             list-format)))))
 
 (defun teleport-list--update-modeline ()
