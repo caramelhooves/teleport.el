@@ -210,7 +210,7 @@ parsed output in `(process-set process :output-json-symbol)'"
 (defun teleport-tramp-completion (&optional _)
   "Return list of tramp completion. The function runs
 asynchronously and returns cached results."
-  (let* ((hosts (teleport--get-hosts-async-cached))
+  (let* ((hosts (teleport--get-nodes-async-cached))
          (status (teleport--status-completion-async-cached))
          (logins (teleport--get-logins status)))
     (cl-loop
@@ -336,7 +336,7 @@ asynchronously and returns cached results."
   (tabulated-list-print t))
 
 (defun teleport-list--calculate-list-format (hosts)
-  (let ((list-format teleport-list-fields))
+  (let ((list-format teleport-list-nodes-fields))
     (when (not list-format)
       (cl-loop
        for
@@ -357,11 +357,12 @@ asynchronously and returns cached results."
     (apply #'vector
            (mapcar
             (lambda (name)
-              (list name teleport-list-fields-width nil))
+              (list name teleport-list-nodes-fields-width nil))
             list-format))))
 
 (defun teleport-list--refresh-buffer ()
-  (with-current-buffer (get-buffer-create teleport-list-buffer-name)
+  (with-current-buffer (get-buffer-create
+                        teleport-list-nodes-buffer-name)
     (when (seq-empty-p tabulated-list-format)
       (setq tabulated-list-format
             (teleport-list--calculate-list-format
@@ -379,7 +380,7 @@ asynchronously and returns cached results."
 (defun teleport-list-nodes-mode--refresh ()
   "Refresh the list of teleport nodes"
   (interactive)
-  (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer)
+  (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer)
   (teleport-list--update-modeline))
 
 (defun teleport-list-nodes-mode--reset-columns ()
@@ -454,13 +455,13 @@ asynchronously and returns cached results."
  ;; TODO
  ;(add-hook 'tabulated-list-revert-hook #'teleport-list-hosts--refresh nil t)
  (teleport-list--refresh-buffer)
- (teleport--get-hosts-async-cached #'teleport-list--refresh-buffer))
+ (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer))
 
 ;;;###autoload
 (defun teleport-list-nodes ()
   "List all teleport nodes."
   (interactive)
-  (switch-to-buffer teleport-list-buffer-name)
+  (switch-to-buffer teleport-list-nodes-buffer-name)
   (teleport-list-nodes-mode))
 
 (provide 'teleport)
