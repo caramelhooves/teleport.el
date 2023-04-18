@@ -1,0 +1,13 @@
+#+title: Teleport for Emacs
+
+* Installation
+#+begin_src elisp
+(use-package! teleport
+  :host github
+  :type git
+  :repo "caramelhooves/teleport.el"
+  :bind (:map teleport-list-nodes-mode-map
+              ("v" . vterm)
+              ("e" . eat)
+              ("d" . dired)))
+#+end_src
