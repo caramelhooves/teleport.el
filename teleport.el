@@ -153,7 +153,7 @@ parsed output in `(process-set process :output-json-symbol)'"
 
   (let ((old-proc (symbol-value process-symbol)))
     ;; If the process is *not* running, start the async command
-    (unless (and old-proc (process-live-p old-proc))
+    (unless (process-live-p old-proc)
       (apply #'teleport--tsh-cmd-async
              output-json-symbol
              process-symbol
