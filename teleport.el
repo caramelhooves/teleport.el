@@ -169,7 +169,7 @@ parsed output in `(process-set process :output-json-symbol)'"
 
 (defun teleport--get-nodes-async-cached
     (&optional completion-notification)
-  "Returns cached list of teleport hosts"
+  "Returns cached list of teleport nodes"
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
                                   completion-notification
@@ -179,7 +179,7 @@ parsed output in `(process-set process :output-json-symbol)'"
                                   "json"))
 
 (defvar teleport--logins-async-cache '(nil)
-  "Cached hashtable of available teleport hosts")
+  "Cached hashtable of available teleport nodes")
 
 (defvar teleport--logins-async-process nil
   "Background process for async completion")
@@ -211,14 +211,14 @@ parsed output in `(process-set process :output-json-symbol)'"
 (defun teleport-tramp-completion (&optional _)
   "Return list of tramp completion. The function runs
 asynchronously and returns cached results."
-  (let* ((hosts (teleport--get-nodes-async-cached))
+  (let* ((nodes (teleport--get-nodes-async-cached))
          (status (teleport--status-completion-async-cached))
          (logins (teleport--get-logins status)))
     (cl-loop
      for
      host
      across
-     hosts
+     nodes
      for
      host-name
      =
@@ -283,7 +283,7 @@ asynchronously and returns cached results."
     (string-join (-remove #'string-empty-p (nconc fields cmd_labels))
                  ", ")))
 
-(defun teleport-list-hosts--column-name ()
+(defun teleport-list-nodes--column-name ()
   (get-text-property (point) 'tabulated-list-column-name))
 
 (defun teleport-list-nodes-mode--kill-column ()
@@ -291,13 +291,13 @@ asynchronously and returns cached results."
   (interactive)
   (setq tabulated-list-format
         (cl-delete
-         (teleport-list-hosts--column-name)
+         (teleport-list-nodes--column-name)
          tabulated-list-format
          :key #'car
          :test #'string=
          :count 1))
   (setq tabulated-list-entries
-        (teleport-list--hosts-mode-entries
+        (teleport-list--nodes-mode-entries
          teleport--nodes-async-cache
          (mapcar #'car tabulated-list-format)))
   (tabulated-list-init-header)
@@ -324,7 +324,7 @@ asynchronously and returns cached results."
 
 (defun teleport-mode--filter-by-pattern (pattern)
   (interactive (list (read-regexp "Filter by regexp")))
-  (let* ((col-name (teleport-list-hosts--column-name))
+  (let* ((col-name (teleport-list-nodes--column-name))
          (col-index
           (cl-position col-name tabulated-list-format
                        :key #'car
@@ -336,14 +336,14 @@ asynchronously and returns cached results."
            :key (lambda (x) (elt (cadr x) col-index)))))
   (tabulated-list-print t))
 
-(defun teleport-list--calculate-list-format (hosts)
+(defun teleport-list--calculate-list-format (nodes)
   (let ((list-format teleport-list-nodes-fields))
     (when (not list-format)
       (cl-loop
        for
        host
        across
-       hosts
+       nodes
        for
        spec
        =
@@ -371,7 +371,7 @@ asynchronously and returns cached results."
       (tabulated-list-init-header))
 
     (setq tabulated-list-entries
-          (teleport-list--hosts-mode-entries
+          (teleport-list--nodes-mode-entries
            teleport--nodes-async-cache
            (mapcar #'car tabulated-list-format)))
 
@@ -401,7 +401,7 @@ asynchronously and returns cached results."
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     map))
 
-(defun teleport-list--hosts-mode-entries (hosts list-format)
+(defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
    with
    empty-entry
@@ -410,7 +410,7 @@ asynchronously and returns cached results."
    for
    host
    across
-   hosts
+   nodes
    for
    name
    =
@@ -437,7 +437,7 @@ asynchronously and returns cached results."
   (setq mode-line-process
         (format "%s%s"
                 (if (process-live-p teleport--nodes-async-process)
-                    ":Hosts"
+                    ":Nodes"
                   "")
                 (if (process-live-p teleport--logins-async-cache)
                     ":Logins"
@@ -448,13 +448,13 @@ asynchronously and returns cached results."
  teleport-list-nodes-mode
  tabulated-list-mode
  "Teleport Nodes"
- "Major mode for listing the available teleport hosts.
-\\<teleport-mode-map>
-\\{teleport-mode-map}"
+ "Major mode for listing the available teleport nodes.
+\\<teleport-list-nodes-map>
+\\{teleport-list-nodes-map}"
  :group 'teleport
 
  ;; TODO
- ;(add-hook 'tabulated-list-revert-hook #'teleport-list-hosts--refresh nil t)
+ ;(add-hook 'tabulated-list-revert-hook #'teleport-list-nodes--refresh nil t)
  (teleport-list--refresh-buffer)
  (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer))
 
