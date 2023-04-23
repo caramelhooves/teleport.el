@@ -48,6 +48,8 @@ called"
 (defconst teleport-tramp-method "tsh"
   "Tramp method for teleport.")
 
+(defvar-local teleport-list-nodes--current-directory nil)
+
 (defun teleport-tramp-add-method ()
   "Add teleport tramp method."
   (add-to-list
@@ -303,25 +305,6 @@ asynchronously and returns cached results."
   (tabulated-list-init-header)
   (tabulated-list-print t))
 
-(defun teleport-list-nodes-mode--open-dired ()
-  (interactive)
-  (dired
-   (format "/%s:root@%s:"
-           teleport-tramp-method
-           (tabulated-list-get-id))))
-
-(defun teleport-list-nodes-mode--open-vterm (&optional arg)
-  (interactive "P")
-  ""
-  " Open a vterm in the current host. ARG has the same meaning as in `vterm' "
-  ""
-  (let ((default-directory
-         (format "/%s:root@%s:"
-                 teleport-tramp-method
-                 (tabulated-list-get-id))))
-    (vterm arg)))
-
-
 (defun teleport-mode--filter-by-pattern (pattern)
   (interactive (list (read-regexp "Filter by regexp")))
   (let* ((col-name (teleport-list-nodes--column-name))
@@ -393,8 +376,6 @@ asynchronously and returns cached results."
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
     (define-key map "k" 'teleport-list-nodes-mode--kill-column)
-    (define-key map "t" 'teleport-list-nodes-mode--open-vterm)
-    (define-key map "d" 'teleport-list-nodes-mode--open-dired)
     (define-key map "g" 'teleport-list-nodes-mode--refresh)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
     (define-key map (kbd "RET") 'teleport-list-nodes-mode--open-dired)
@@ -444,6 +425,18 @@ asynchronously and returns cached results."
                   "")))
   (force-mode-line-update t))
 
+(defun teleport-list-nodes--set-default-directory ()
+  "Set the default directory to point on the remote node."
+  (setq-local default-directory
+              (format "/%s:root@%s:"
+                      teleport-tramp-method
+                      (tabulated-list-get-id))))
+
+(defun teleport-list-nodes--restore-default-directory ()
+  "Restore the default directory to the one used to open nodes list."
+  (setq-local default-directory
+              teleport-list-nodes--current-directory))
+
 (define-derived-mode
  teleport-list-nodes-mode
  tabulated-list-mode
@@ -455,6 +448,9 @@ asynchronously and returns cached results."
 
  ;; TODO
  ;(add-hook 'tabulated-list-revert-hook #'teleport-list-nodes--refresh nil t)
+ (setq-local teleport-list-nodes--current-directory default-directory)
+ (add-hook 'pre-command-hook #'teleport-list-nodes--set-default-directory 90 t)
+ (add-hook 'post-command-hook #'teleport-list-nodes--restore-default-directory -90 t)
  (teleport-list--refresh-buffer)
  (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer))
 
