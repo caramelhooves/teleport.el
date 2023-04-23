@@ -350,14 +350,13 @@ asynchronously and returns cached results."
     (when (seq-empty-p tabulated-list-format)
       (setq tabulated-list-format
             (teleport-list--calculate-list-format
-             teleport--nodes-async-cache))
-      (tabulated-list-init-header))
+             teleport--nodes-async-cache)))
 
     (setq tabulated-list-entries
           (teleport-list--nodes-mode-entries
            teleport--nodes-async-cache
            (mapcar #'car tabulated-list-format)))
-
+    (tabulated-list-init-header)
     (tabulated-list-print t)
     (teleport-list--update-modeline)))
 
