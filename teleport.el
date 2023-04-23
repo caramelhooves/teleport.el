@@ -139,13 +139,9 @@ parsed output in `(process-set process :output-json-symbol)'"
       (process-put stderr-process :main-process process)
       (set process-symbol process))))
 
-(defun teleport--tsh-cmd-async-cached
-    (output-json-symbol
-     process-symbol completion-notification &rest cmd)
-  "Start 'cmd' asynchronously if it is not running"
-
-  (if (not (boundp process-symbol))
-      (set process-symbol nil))
+(defun teleport--tsh-cmd-async-cached (output-json-symbol process-symbol completion-notification &rest cmd)
+  "Start 'cmd' asynchronously if `process-symbol' process is not
+running. Store the result in `output-json-symbol'."
 
   (unless completion-notification
     (setq completion-notification
@@ -215,16 +211,9 @@ asynchronously and returns cached results."
          (status (teleport--status-completion-async-cached))
          (logins (teleport--get-logins status)))
     (cl-loop
-     for
-     host
-     across
-     nodes
-     for
-     host-name
-     =
-     (gethash "name" (gethash "metadata" host))
-     append
-     (mapcar (lambda (login) (list login host-name)) logins))))
+     for host across nodes
+     for host-name = (gethash "name" (gethash "metadata" host))
+     append (mapcar (lambda (login) (list login host-name)) logins))))
 
 (with-eval-after-load 'tramp
   (teleport-tramp-add-method)
@@ -234,23 +223,11 @@ asynchronously and returns cached results."
 (defun teleport--completion-annotation-all-fields
     (metadata &optional prefix)
   "Format an annotation string by printing all fields in METADATA."
-  ;(format " cmd_labels: %s" cmd_labels))
   (cl-loop
-   for
-   key
-   being
-   the
-   hash-key
-   of
-   metadata
-   for
-   value
-   =
-   (gethash key metadata)
-   if
-   (hash-table-p value)
-   concat
-   (teleport--completion-annotation-all-fields value
+   for key being the hash-key of metadata
+   for value =(gethash key metadata)
+   if (hash-table-p value)
+   concat (teleport--completion-annotation-all-fields value
                                                (concat
                                                 prefix key "."))
    else
@@ -321,18 +298,9 @@ asynchronously and returns cached results."
   (let ((list-format teleport-list-nodes-fields))
     (when (not list-format)
       (cl-loop
-       for
-       host
-       across
-       nodes
-       for
-       spec
-       =
-       (gethash "spec" host)
-       for
-       cmd_labels
-       =
-       (hash-table-keys (gethash "cmd_labels" spec))
+       for host across nodes
+       for spec = (gethash "spec" host)
+       for cmd_labels = (hash-table-keys (gethash "cmd_labels" spec))
        do
        (setq list-format
              (cl-union list-format cmd_labels :test #'string=))))
@@ -380,35 +348,19 @@ asynchronously and returns cached results."
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
-   with
-   empty-entry
-   =
-   (make-hash-table)
-   for
-   host
-   across
-   nodes
-   for
-   name
-   =
-   (gethash "name" (gethash "metadata" host))
-   for
-   spec
-   =
-   (gethash "spec" host)
-   for
-   cmd_labels
-   =
-   (gethash "cmd_labels" spec)
-   collect
-   (list
-    name
-    (apply #'vector
-           (mapcar
-            (lambda (name)
-              (gethash "result" (gethash name cmd_labels empty-entry)
-                       ""))
-            list-format)))))
+   with empty-entry = (make-hash-table)
+   for host across nodes
+   for name = (gethash "name" (gethash "metadata" host))
+   for spec = (gethash "spec" host)
+   for cmd_labels = (gethash "cmd_labels" spec)
+   collect (list
+            name
+            (apply #'vector
+                   (mapcar
+                    (lambda (name)
+                      (gethash "result" (gethash name cmd_labels empty-entry)
+                               ""))
+                    list-format)))))
 
 (defun teleport-list--update-modeline ()
   (setq mode-line-process
@@ -434,21 +386,19 @@ asynchronously and returns cached results."
               teleport-list-nodes--current-directory))
 
 (define-derived-mode
- teleport-list-nodes-mode
- tabulated-list-mode
- "Teleport Nodes"
- "Major mode for listing the available teleport nodes.
+  teleport-list-nodes-mode
+  tabulated-list-mode
+  "Teleport Nodes"
+  "Major mode for listing the available teleport nodes.
 \\<teleport-list-nodes-map>
 \\{teleport-list-nodes-map}"
- :group 'teleport
+  :group 'teleport
 
- ;; TODO
- ;(add-hook 'tabulated-list-revert-hook #'teleport-list-nodes--refresh nil t)
- (setq-local teleport-list-nodes--current-directory default-directory)
- (add-hook 'pre-command-hook #'teleport-list-nodes--set-default-directory 90 t)
- (add-hook 'post-command-hook #'teleport-list-nodes--restore-default-directory -90 t)
- (teleport-list--refresh-buffer)
- (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer))
+  (setq-local teleport-list-nodes--current-directory default-directory)
+  (add-hook 'pre-command-hook #'teleport-list-nodes--set-default-directory 90 t)
+  (add-hook 'post-command-hook #'teleport-list-nodes--restore-default-directory -90 t)
+  (teleport-list--refresh-buffer)
+  (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer))
 
 ;;;###autoload
 (defun teleport-list-nodes ()
