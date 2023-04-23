@@ -6,6 +6,12 @@
   :host github
   :type git
   :repo "caramelhooves/teleport.el"
+* Configuration
+#+begin_src elisp
+(use-package teleport
+  :config
+    (teleport-tramp-add-method)
+
   :bind (:map teleport-list-nodes-mode-map
               ("v" . vterm)
               ("e" . eat)

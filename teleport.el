@@ -59,7 +59,9 @@ called"
      (tramp-copy-args (("scp" "-r")))
      (tramp-copy-recursive t)
      (tramp-remote-shell "/bin/sh")
-     (tramp-remote-shell-args ("-i" "-c")))))
+     (tramp-remote-shell-args ("-i" "-c"))))
+  (tramp-set-completion-function
+     teleport-tramp-method '((teleport-tramp-completion ""))))
 
 (defun teleport--tsh-sentinel (process event)
   "Sentinel for caching tsh commands output process. Stores JSON
@@ -215,10 +217,6 @@ asynchronously and returns cached results."
      for host-name = (gethash "name" (gethash "metadata" host))
      append (mapcar (lambda (login) (list login host-name)) logins))))
 
-(with-eval-after-load 'tramp
-  (teleport-tramp-add-method)
-  (tramp-set-completion-function
-   teleport-tramp-method '((teleport-tramp-completion ""))))
 
 (defun teleport--completion-annotation-all-fields
     (metadata &optional prefix)
