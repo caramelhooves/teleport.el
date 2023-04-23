@@ -9,15 +9,13 @@
 ;; Version: 0.0.1
 ;; Keywords: tools
 ;; Homepage: https://github.com/caramelhooves/teleport.el
-;; Package-Requires: ((emacs "27.1") (vterm "0.0.2"))
+;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Code:
 
 (require 'tramp)
-(require 'dired)
-(require 'vterm)
 
 (defcustom teleport-list-nodes-fields nil
   "Columns to display in the teleport node list buffer, nil means all"
@@ -377,7 +375,6 @@ asynchronously and returns cached results."
     (define-key map "k" 'teleport-list-nodes-mode--kill-column)
     (define-key map "g" 'teleport-list-nodes-mode--refresh)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
-    (define-key map (kbd "RET") 'teleport-list-nodes-mode--open-dired)
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     map))
 
