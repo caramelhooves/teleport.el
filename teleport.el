@@ -104,7 +104,7 @@ parsed output in `(process-set process :output-json-symbol)'"
   (with-current-buffer (process-buffer process)
     (cond
      ((string= event "finished\n")
-      (delete-window (get-buffer-window))
+      (delete-windows-on (current-buffer) 't)
       (kill-buffer))
      (t
       (message "Teleport stderr helper process failed: %s, %s"
