@@ -331,7 +331,7 @@ asynchronously and returns cached results."
   (teleport-list--update-modeline))
 
 (defun teleport-list-nodes-mode--reset-columns ()
-  "Restore the columns to the default (teleport-list-nodes-fields) value"
+  "Restore the columns to the default `teleport-list-nodes-fields' value."
   (interactive)
   (setq tabulated-list-format nil))
 
