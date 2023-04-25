@@ -393,8 +393,8 @@ no such property exist."
   tabulated-list-mode
   "Teleport Nodes"
   "Major mode for listing the available teleport nodes.
-\\<teleport-list-nodes-map>
-\\{teleport-list-nodes-map}"
+\\<teleport-list-nodes-mode-map>
+\\{teleport-list-nodes-mode-map}"
   :group 'teleport
 
   (setq-local teleport-list-nodes--current-directory default-directory)
