@@ -377,10 +377,11 @@ no such property exist."
 
 (defun teleport-list-nodes--set-default-directory ()
   "Set the default directory to point on the remote node."
-  (setq-local default-directory
-              (format "/%s:root@%s:"
-                      teleport-tramp-method
-                      (tabulated-list-get-id))))
+  (when (where-is-internal last-command teleport-list-nodes-mode-map)
+    (setq-local default-directory
+                (format "/%s:root@%s:"
+                        teleport-tramp-method
+                        (tabulated-list-get-id)))))
 
 (defun teleport-list-nodes--restore-default-directory ()
   "Restore the default directory to the one used to open nodes list."
