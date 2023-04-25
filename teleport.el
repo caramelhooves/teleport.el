@@ -344,20 +344,24 @@ asynchronously and returns cached results."
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     map))
 
+(defun teleport-list--get-node-label (spec prop-name)
+  "Get property PROP-NAME from node's SPEC. Return empty string if
+no such property exist."
+  (let* ((cmd_labels (gethash "cmd_labels" spec))
+         (t1 (gethash prop-name cmd_labels)))
+    (gethash "result" t1 "")))
+
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
-   with empty-entry = (make-hash-table)
    for host across nodes
    for name = (gethash "name" (gethash "metadata" host))
    for spec = (gethash "spec" host)
-   for cmd_labels = (gethash "cmd_labels" spec)
    collect (list
             name
             (apply #'vector
                    (mapcar
                     (lambda (name)
-                      (gethash "result" (gethash name cmd_labels empty-entry)
-                               ""))
+                      (teleport-list--get-node-label spec name))
                     list-format)))))
 
 (defun teleport-list--update-modeline ()
