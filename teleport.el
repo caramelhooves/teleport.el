@@ -349,7 +349,9 @@ asynchronously and returns cached results."
 no such property exist."
   (let* ((cmd_labels (gethash "cmd_labels" spec))
          (t1 (gethash prop-name cmd_labels)))
-    (gethash "result" t1 "")))
+    (if t1
+        (gethash "result" t1)
+      "")))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
