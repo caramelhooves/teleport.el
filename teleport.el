@@ -48,6 +48,7 @@ called"
 
 (defvar-local teleport-list-nodes--current-directory nil)
 
+;;;###autoload
 (defun teleport-tramp-add-method ()
   "Add teleport tramp method."
   (add-to-list
