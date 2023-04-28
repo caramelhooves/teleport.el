@@ -305,7 +305,7 @@ asynchronously and returns cached results."
     (apply #'vector
            (mapcar
             (lambda (name)
-              (list name teleport-list-nodes-fields-width nil))
+              (list name teleport-list-nodes-fields-width t))
             list-format))))
 
 (defun teleport-list--refresh-buffer ()
