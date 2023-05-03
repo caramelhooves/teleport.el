@@ -380,11 +380,17 @@ no such property exist."
 
 (defun teleport-list-nodes--set-default-directory ()
   "Set the default directory to point on the remote node."
-  (when (where-is-internal last-command teleport-list-nodes-mode-map)
-    (setq-local default-directory
-                (format "/%s:root@%s:"
-                        teleport-tramp-method
-                        (tabulated-list-get-id)))))
+  (let (switch-default-directory)
+    (map-keymap-internal (lambda (event function)
+                           (when (eq this-command function)
+                             (setq switch-default-directory t)))
+                         teleport-list-nodes-mode-map)
+    (when switch-default-directory
+      (setq-local default-directory
+                  (format "/%s:root@%s:"
+                          teleport-tramp-method
+                          (tabulated-list-get-id))))))
+
 
 (defun teleport-list-nodes--restore-default-directory ()
   "Restore the default directory to the one used to open nodes list."
