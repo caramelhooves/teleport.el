@@ -299,10 +299,12 @@ asynchronously and returns cached results."
       (cl-loop
        for host across nodes
        for spec = (gethash "spec" host)
-       for cmd_labels = (hash-table-keys (gethash "cmd_labels" spec))
+       for cmd_labels = (gethash "cmd_labels" spec)
+       when cmd_labels
        do
        (setq list-format
-             (cl-union list-format cmd_labels :test #'string=))))
+             (cl-union list-format (hash-table-keys cmd_labels) :test #'string=))))
+
     (apply #'vector
            (mapcar
             (lambda (name)
@@ -345,14 +347,19 @@ asynchronously and returns cached results."
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     map))
 
+(defun teleport--get-hash-map-nested (map &rest keys)
+  "Get nested value from VECTOR by KEYS"
+  (cl-loop
+   for result = map then (gethash key result)
+   for key in keys
+   while result
+   finally return result))
+
 (defun teleport-list--get-node-label (spec prop-name)
   "Get property PROP-NAME from node's SPEC. Return empty string if
 no such property exist."
-  (let* ((cmd_labels (gethash "cmd_labels" spec))
-         (t1 (gethash prop-name cmd_labels)))
-    (if t1
-        (gethash "result" t1)
-      "")))
+  (or (teleport--get-hash-map-nested spec "cmd_labels" prop-name "result")
+  ""))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
