@@ -43,6 +43,17 @@ called"
   :group 'teleport
   :type '(alist :key-type regex :value-type function))
 
+(defcustom teleport-list-nodes-show-hostname t
+  "Show node's hostname in the list"
+  :type 'boolean
+  :group 'teleport
+  )
+
+(defcustom teleport-list-nodes-hostname-column ".hostname"
+  "Column name to display node's hostname, should be unique and not
+overlap with any existing cmd_labels."
+  :type 'string)
+
 (defconst teleport-tramp-method "tsh"
   "Tramp method for teleport.")
 
@@ -305,6 +316,9 @@ asynchronously and returns cached results."
        (setq list-format
              (cl-union list-format (hash-table-keys cmd_labels) :test #'string=))))
 
+    (when teleport-list-nodes-show-hostname
+      (cons teleport-list-nodes-hostname-column list-format))
+
     (apply #'vector
            (mapcar
             (lambda (name)
@@ -358,8 +372,9 @@ asynchronously and returns cached results."
 (defun teleport-list--get-node-label (spec prop-name)
   "Get property PROP-NAME from node's SPEC. Return empty string if
 no such property exist."
-  (or (teleport--get-hash-map-nested spec "cmd_labels" prop-name "result")
-  ""))
+  (cond
+   ((string= teleport-list-nodes-hostname-column prop-name) (teleport--get-hash-map-nested spec "hostname"))
+   (t (or (teleport--get-hash-map-nested spec "cmd_labels" prop-name "result") ""))))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
