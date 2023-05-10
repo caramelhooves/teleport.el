@@ -185,7 +185,7 @@ running. Store the result in `output-json-symbol'."
 
 (defun teleport--status-completion-async-cached
     (&optional completion-notification)
-  "Returns cached list of logins avaialable"
+  "Returns cached list of logins available"
   (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
                                   'teleport--logins-async-process
                                   completion-notification
