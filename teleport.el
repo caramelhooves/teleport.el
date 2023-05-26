@@ -16,11 +16,26 @@
 ;;; Code:
 
 (require 'tramp)
+(define-widget 'teleport-list-filed-config 'lazy
+  "Configuration for a single column in the teleport node list buffer"
+  :offset 4
+  :tag "Column"
+  :type '(group :tag "Properties"
+          (const :format "" :value :name)
+          (string :tag "Name" :value "")
+          (const :format "" :value :path)
+          (repeat :tag "Path" (string))
+          (set :inline t :tag "Optional properties"
+               (cons :inline t :format "%v"
+                     (const :format "" :value :width)
+                     (integer :tag "Custom Width"))
+               (const :tag "Hide" :inline t :value (:hidden t)))))
 
 (defcustom teleport-list-nodes-fields nil
-  "Columns to display in the teleport node list buffer, nil means all"
+  "Columns to display in the teleport node list buffer"
   :group 'teleport
-  :type '(repeat string))
+  :type '(repeat teleport-list-filed-config))
+
 
 (defcustom teleport-list-nodes-fields-width 20
   "Default width of each column in the teleport list buffer"
@@ -43,7 +58,7 @@ called"
   :group 'teleport
   :type '(alist :key-type regex :value-type function))
 
-(defcustom teleport-list-nodes-show-hostname t
+(defcustom teleport-list-nodes-show-hostname nil
   "Show node's hostname in the list"
   :type 'boolean
   :group 'teleport
@@ -270,25 +285,26 @@ asynchronously and returns cached results."
     (string-join (-remove #'string-empty-p (nconc fields cmd_labels))
                  ", ")))
 
+(defun teleport--seq-last (sequence)
+  "Return the last element of SEQUENCE."
+  ;; I wonder why it is not implemented in `seq'
+  (seq-elt sequence (- (length sequence) 1)))
+
 (defun teleport-list-nodes--column-name ()
-  (get-text-property (point) 'tabulated-list-column-name))
+  (or
+   (get-text-property (point) 'tabulated-list-column-name)
+   (car (teleport--seq-last tabulated-list-format))))
 
 (defun teleport-list-nodes-mode--kill-column ()
-  ""
+  "Hide the column at point"
   (interactive)
-  (setq tabulated-list-format
-        (cl-delete
-         (teleport-list-nodes--column-name)
-         tabulated-list-format
-         :key #'car
-         :test #'string=
-         :count 1))
-  (setq tabulated-list-entries
-        (teleport-list--nodes-mode-entries
-         teleport--nodes-async-cache
-         (mapcar #'car tabulated-list-format)))
-  (tabulated-list-init-header)
-  (tabulated-list-print t))
+  (let ((col (cl-find
+   (teleport-list-nodes--column-name)
+   teleport-list-nodes-fields
+   :key (lambda (x) (plist-get x :name)))))
+    (message "Hide column %s" col)
+    (plist-put col :hidden t))
+  (teleport-list--refresh-buffer))
 
 (defun teleport-mode--filter-by-pattern (pattern)
   (interactive (list (read-regexp "Filter by regexp")))
@@ -304,45 +320,72 @@ asynchronously and returns cached results."
            :key (lambda (x) (elt (cadr x) col-index)))))
   (tabulated-list-print t))
 
-(defun teleport-list--calculate-list-format (nodes)
-  (let ((list-format teleport-list-nodes-fields))
-    (when (not list-format)
-      (cl-loop
-       for host across nodes
-       for spec = (gethash "spec" host)
-       for cmd_labels = (gethash "cmd_labels" spec)
-       when cmd_labels
-       do
-       (setq list-format
-             (cl-union list-format (hash-table-keys cmd_labels) :test #'string=))))
+(defun teleport--refresh-available-spec (nodes)
+  "Iterate over NODES and collect all unique cmd_labels names. Stores them in `teleport-list-nodes-fields'"
+  ;; Collect all available cmd_labels path from spec. `cmd-labels-path' is a list
+  ;; of (label . path), where path is a list of strings showing full path in
+  ;; node's JSON
+  (let ((cmd-labels-path
+         (cl-loop
+          for node across nodes
+          for spec = (gethash "spec" node)
+          for cmd_labels = (gethash "cmd_labels" spec)
+          when cmd_labels
+          for cmd-labels-path = () then (cl-union cmd-labels-path (hash-table-keys cmd_labels) :test #'equal)
+          finally return (mapcar (lambda (label)
+                                   `(,label
+                                     ("cmd_labels" ,label "result")))
+                        cmd-labels-path))))
 
-    (when teleport-list-nodes-show-hostname
-      (cons teleport-list-nodes-hostname-column list-format))
+    (let ((all-specs-path
+          (if teleport-list-nodes-show-hostname
+              ;;FIXME: what if cmd_labels also have 'hostname'? tabulated mode
+              ;;does not expect duplicate column names.
+              (cons '("hostname" ("hostname")) cmd-labels-path)
+            cmd-labels-path)))
 
-    (apply #'vector
-           (mapcar
-            (lambda (name)
-              (list name teleport-list-nodes-fields-width t))
-            list-format))))
+      ;; Find which specs are missing from `teleport-list-nodes-fields', compare only 'path' field
+      (let ((missing-specs
+             (cl-set-difference
+              all-specs-path
+              (mapcar (lambda (x) (list (plist-get x :name) (plist-get x :path))) teleport-list-nodes-fields)
+              :test #'equal
+              :key #'cadr)))
+      ;; Add them to the `teleport-list-nodes-fields' with default width `teleport-list-nodes-fields-width'
+        (setq teleport-list-nodes-fields
+              (nconc teleport-list-nodes-fields
+                     (mapcar (lambda (x) `(:name ,(car x) :path ,(cadr x)))
+                             missing-specs)))))))
+
+(defun teleport-list--calculate-list-format (nodes-fields)
+  "Calculate a vector suitable for `tabulated-list-format' from NODES-FIELDS(
+`teleport-list-nodes-fields')"
+  (let ((enabled-fields
+         (seq-filter (lambda (x) (not (plist-get x :hidden))) nodes-fields)))
+  (apply #'vector (mapcar (lambda (x) (list
+                                       (plist-get x :name)
+                                       (or (plist-get x :width) teleport-list-nodes-fields-width)
+                                       t)) enabled-fields))))
 
 (defun teleport-list--refresh-buffer ()
+  (interactive)
   (with-current-buffer (get-buffer-create
                         teleport-list-nodes-buffer-name)
-    (when (seq-empty-p tabulated-list-format)
-      (setq tabulated-list-format
-            (teleport-list--calculate-list-format
-             teleport--nodes-async-cache)))
+    (teleport--refresh-available-spec teleport--nodes-async-cache)
+    (setq tabulated-list-format
+          (teleport-list--calculate-list-format
+           teleport-list-nodes-fields))
 
     (setq tabulated-list-entries
           (teleport-list--nodes-mode-entries
            teleport--nodes-async-cache
-           (mapcar #'car tabulated-list-format)))
+           teleport-list-nodes-fields))
     (tabulated-list-init-header)
     (tabulated-list-print t)
     (teleport-list--update-modeline)))
 
-(defun teleport-list-nodes-mode--refresh ()
-  "Refresh the list of teleport nodes"
+(defun teleport-list-nodes-mode--update-list ()
+  "Fetch the list of teleport nodes and refresh the buffer."
   (interactive)
   (teleport--get-nodes-async-cached #'teleport-list--refresh-buffer)
   (teleport-list--update-modeline))
@@ -356,7 +399,8 @@ asynchronously and returns cached results."
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
     (define-key map "k" 'teleport-list-nodes-mode--kill-column)
-    (define-key map "g" 'teleport-list-nodes-mode--refresh)
+    (define-key map "g" 'teleport-list--refresh-buffer)
+    (define-key map "G" 'teleport-list-nodes-mode--update-list)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     map))
@@ -369,25 +413,24 @@ asynchronously and returns cached results."
    while result
    finally return result))
 
-(defun teleport-list--get-node-label (spec prop-name)
-  "Get property PROP-NAME from node's SPEC. Return empty string if
+(defun teleport-list--get-node-label (spec prop-path)
+  "Get property by PROP-PATH from node's SPEC. Return empty string if
 no such property exist."
-  (cond
-   ((string= teleport-list-nodes-hostname-column prop-name) (teleport--get-hash-map-nested spec "hostname"))
-   (t (or (teleport--get-hash-map-nested spec "cmd_labels" prop-name "result") ""))))
+  (or (apply #'teleport--get-hash-map-nested spec prop-path) ""))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   (cl-loop
-   for host across nodes
-   for name = (gethash "name" (gethash "metadata" host))
-   for spec = (gethash "spec" host)
+   for node across nodes
+   for spec = (gethash "spec" node)
+   for name = (gethash "name" (gethash "metadata" node))
    collect (list
             name
-            (apply #'vector
-                   (mapcar
-                    (lambda (name)
-                      (teleport-list--get-node-label spec name))
-                    list-format)))))
+            (apply
+             #'vector
+            (cl-loop
+             for p in list-format
+             unless (plist-get p :hidden)
+             collect (teleport-list--get-node-label spec (plist-get p :path)))))))
 
 (defun teleport-list--update-modeline ()
   (setq mode-line-process
