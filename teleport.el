@@ -93,6 +93,8 @@ overlap with any existing cmd_labels."
 (defun teleport--tsh-sentinel (process event)
   "Sentinel for caching tsh commands output process. Stores JSON
 parsed output in `(process-set process :output-json-symbol)'"
+  ;;TODO handle errors as described in the docs
+  ;;(info "elisp#Accepting Output")
   (with-current-buffer (process-buffer process)
     (cond
      ((string= event "finished\n")
@@ -107,9 +109,11 @@ parsed output in `(process-set process :output-json-symbol)'"
         (kill-buffer (current-buffer))
         (funcall completion-notification)))
      (t
-      (message "Teleport status process failed: %s, %s"
+      (message "Teleport status process failed: %s, %s, stderr: %s"
                event
-               (buffer-string))))))
+               (buffer-string)
+               (with-current-buffer (process-get process :stderr-buffer) (buffer-string))
+               )))))
 
 (defun teleport--display-current-buffer (&rest _)
   "Show current buffer in a new window"
@@ -162,9 +166,8 @@ parsed output in `(process-set process :output-json-symbol)'"
             :stderr stderr-process
             :noquery t)))
       (process-put process :output-json-symbol output-json-symbol)
-      (process-put
-       process
-       :completion-notification completion-notification)
+      (process-put process :completion-notification completion-notification)
+      (process-put process :stderr-buffer (process-buffer stderr-process))
       (process-put stderr-process :main-process process)
       (set process-symbol process))))
 
