@@ -323,24 +323,25 @@ asynchronously and returns cached results."
            :key (lambda (x) (elt (cadr x) col-index)))))
   (tabulated-list-print t))
 
+(defun teleport-list-nodes--get-list-of-unique-cmd-labels (nodes)
+  (cl-loop
+   for node across nodes
+   for spec = (gethash "spec" node)
+   for cmd_labels = (gethash "cmd_labels" spec)
+   when cmd_labels
+   for cmd-labels-path = (hash-table-keys cmd_labels) then (cl-union cmd-labels-path (hash-table-keys cmd_labels) :test #'equal)
+   finally return (mapcar (lambda (label)
+                            `(,label
+                              ("cmd_labels" ,label "result")))
+                          cmd-labels-path)))
+
 (defun teleport--refresh-available-spec (nodes)
   "Iterate over NODES and collect all unique cmd_labels names. Stores them in `teleport-list-nodes-fields'"
   ;; Collect all available cmd_labels path from spec. `cmd-labels-path' is a list
   ;; of (label . path), where path is a list of strings showing full path in
   ;; node's JSON
-  (let ((cmd-labels-path
-         (cl-loop
-          for node across nodes
-          for spec = (gethash "spec" node)
-          for cmd_labels = (gethash "cmd_labels" spec)
-          when cmd_labels
-          for cmd-labels-path = () then (cl-union cmd-labels-path (hash-table-keys cmd_labels) :test #'equal)
-          finally return (mapcar (lambda (label)
-                                   `(,label
-                                     ("cmd_labels" ,label "result")))
-                        cmd-labels-path))))
-
-    (let ((all-specs-path
+  (let* ((cmd-labels-path (teleport-list-nodes--get-list-of-unique-cmd-labels nodes))
+         (all-specs-path
           (if teleport-list-nodes-show-hostname
               ;;FIXME: what if cmd_labels also have 'hostname'? tabulated mode
               ;;does not expect duplicate column names.
@@ -358,7 +359,7 @@ asynchronously and returns cached results."
         (setq teleport-list-nodes-fields
               (nconc teleport-list-nodes-fields
                      (mapcar (lambda (x) `(:name ,(car x) :path ,(cadr x)))
-                             missing-specs)))))))
+                             missing-specs))))))
 
 (defun teleport-list--calculate-list-format (nodes-fields)
   "Calculate a vector suitable for `tabulated-list-format' from NODES-FIELDS(
