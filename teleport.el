@@ -58,7 +58,7 @@ called"
   :group 'teleport
   :type '(alist :key-type regex :value-type function))
 
-(defcustom teleport-list-nodes-show-hostname nil
+(defcustom teleport-list-nodes-show-hostname t
   "Show node's hostname in the list"
   :type 'boolean
   :group 'teleport
