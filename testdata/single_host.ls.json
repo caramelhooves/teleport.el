@@ -1,0 +1,39 @@
+[
+  {
+    "kind": "node",
+    "version": "v2",
+    "metadata": {
+      "name": "d0b1ec35-b13c-467f-bea4-792d2a07cfee",
+      "labels": {
+        "teleport.internal/resource-id": "b81abcb4-6ab1-43a5-9d2b-15abb3d22434"
+      },
+      "expires": "2022-12-31T23:59:59Z",
+      "id": 4762831450195678125
+    },
+    "spec": {
+      "addr": "",
+      "hostname": "ip-172-16-12-87.ec2.internal",
+      "cmd_labels": {
+        "uptime": {
+          "period": "1m0s",
+          "command": [
+            "uptime"
+          ],
+          "result": "15:18:04 up 22:53,  2 users,  load average: 0,86, 1,11, 1,26"
+        }
+      },
+      "rotation": {
+        "current_id": "",
+        "started": "0001-01-01T00:00:00Z",
+        "last_rotated": "0001-01-01T00:00:00Z",
+        "schedule": {
+          "update_clients": "0001-01-01T00:00:00Z",
+          "update_servers": "0001-01-01T00:00:00Z",
+          "standby": "0001-01-01T00:00:00Z"
+        }
+      },
+      "use_tunnel": true,
+      "version": "10.4.2"
+    }
+  }
+]

@@ -1,0 +1,13 @@
+#!/bin/python3
+
+import os
+import sys
+
+args = sys.argv[1:]
+
+if args == ["ls", "-f", "json"]:
+    print(open(os.environ['EMACS_TELEPORT_TSH_LS_RESPONSE_FILE']).read())
+elif args == ["status", "-f", "json"]:
+    print(open(os.environ['EMACS_TELEPORT_TSH_STATUS_RESPONSES_FILE']).read())
+else:
+    raise Exception(f"Don't understand what to do with{sys.argv}")

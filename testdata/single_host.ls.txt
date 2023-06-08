@@ -1,0 +1,1 @@
+ip-172-16-12-87.ec2.internal 15:18:04 up 22:53,  2 users,  load average: 0,86, 1,11, 1,26
