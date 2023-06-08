@@ -26,7 +26,7 @@
           (const :format "" :value :path)
           (repeat :tag "Path" (string))
           (set :inline t :tag "Optional properties"
-               (cons :inline t :format "%v"
+               (list :inline t :format "%v"
                      (const :format "" :value :width)
                      (integer :tag "Custom Width"))
                (const :tag "Hide" :inline t :value (:hidden t)))))
