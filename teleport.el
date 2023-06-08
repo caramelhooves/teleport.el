@@ -405,11 +405,17 @@ them with columns from the currently available nodes."
          teleport-list-nodes-fields))
   (teleport-list--refresh-buffer))
 
+(defun teleport-list-nodes-mode--customize-displayed-fields ()
+  "Customize the displayed columns."
+  (interactive)
+  (customize-variable 'teleport-list-nodes-fields))
+
 (defvar teleport-list-nodes-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
     (define-key map "k" 'teleport-list-nodes-mode--kill-column)
     (define-key map "g" 'teleport-list--refresh-buffer)
+    (define-key map "c" 'teleport-list-nodes-mode--customize-displayed-fields)
     (define-key map "G" 'teleport-list-nodes-mode--update-list)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
