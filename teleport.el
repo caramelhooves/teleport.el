@@ -395,9 +395,15 @@ asynchronously and returns cached results."
   (teleport-list--update-modeline))
 
 (defun teleport-list-nodes-mode--reset-columns ()
-  "Restore the columns to the default `teleport-list-nodes-fields' value."
+  "Remove any customization of the displayed columns and re-fill
+them with columns from the currently available nodes."
   (interactive)
-  (setq tabulated-list-format nil))
+  (setq teleport-list-nodes-fields nil)
+  (teleport--refresh-available-spec teleport--nodes-async-cache)
+  (setq tabulated-list-format
+        (teleport-list--calculate-list-format
+         teleport-list-nodes-fields))
+  (teleport-list--refresh-buffer))
 
 (defvar teleport-list-nodes-mode-map
   (let ((map (make-sparse-keymap)))
