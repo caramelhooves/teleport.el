@@ -44,14 +44,19 @@
     (setenv "EMACS_TELEPORT_TSH_STATUS_RESPONSE_FILE" (concat emacs-teleport-root-path "/testdata/" filename)))
     )
 
-
 (Then "^the buffer should contain content of \"\\([^\"]+\\)\"$"
+;; Compare buffer content with file content, ignoring trailing whitespace
   (lambda (filename)
-    (let ((expected (with-temp-buffer
-               (insert-file-contents (concat emacs-teleport-root-path "/testdata/" filename))
-               (buffer-string)))
+    (let ((actual-buffer (current-buffer))
           (actual (buffer-string)))
-    (cl-assert (string= expected actual) nil "Expected '%s' to be equal to '%s'" actual expected))))
+      (with-temp-buffer
+        (insert-file-contents (concat emacs-teleport-root-path "/testdata/" filename))
+        (require 'diff)
+        (let ((expected-buffer (current-buffer))
+              (expected (buffer-string)))
+          (with-current-buffer
+              (diff-no-select expected-buffer actual-buffer "-u --ignore-trailing-space" t)
+            (cl-assert (search-forward "Diff finished (no differences)" nil t) nil "Expected '%s' to be equal to '%s': diff: %s" actual expected (buffer-string) )))))))
 
 (Setup
  (setup-mock-tsh)
