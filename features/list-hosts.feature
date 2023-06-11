@@ -1,4 +1,4 @@
-Feature: List teleport hosts
+Feature: List teleport nodes
 
   Scenario Outline: Happy path
   Given tsh ls prints content of "<json>"
@@ -10,5 +10,5 @@ Feature: List teleport hosts
 
   Examples:
   | json                | txt                |
-  | single_host.ls.json | single_host.ls.txt |
-  | three_hosts.ls.json | three_hosts.ls.txt |
+  | single_node.ls.json | single_node.ls.txt |
+  | three_nodes.ls.json | three_nodes.ls.txt |
