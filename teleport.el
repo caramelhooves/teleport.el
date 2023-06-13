@@ -410,11 +410,20 @@ them with columns from the currently available nodes."
   (interactive)
   (customize-variable 'teleport-list-nodes-fields))
 
+(defun teleport-list-nodes-mode--copy-node-id ()
+  "Copy the node ID of the current node to the kill ring. The Node
+ID could be used to connect to the node: tsh ssh root@<node-id>"
+  (interactive)
+  (let ((node-id (tabulated-list-get-id)))
+    (kill-new node-id)
+    (message "Copied node ID %s to the kill ring" node-id)))
+
 (defvar teleport-list-nodes-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
     (define-key map "k" 'teleport-list-nodes-mode--kill-column)
     (define-key map "g" 'teleport-list--refresh-buffer)
+    (define-key map "i" 'teleport-list-nodes-mode--copy-node-id)
     (define-key map "c" 'teleport-list-nodes-mode--customize-displayed-fields)
     (define-key map "G" 'teleport-list-nodes-mode--update-list)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
