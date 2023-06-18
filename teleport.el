@@ -1,4 +1,4 @@
-;; teleport.el --- tramp backend for teleport (goteleport.com) -*- lexical-binding: t; -*-
+;;; teleport.el --- Emacs integration for tsh (goteleport.com) -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2023 Caramel Hooves
 ;;
@@ -9,9 +9,12 @@
 ;; Version: 0.0.1
 ;; Keywords: tools
 ;; Homepage: https://github.com/caramelhooves/teleport.el
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (dash "2.18.0"))
 ;;
 ;; This file is not part of GNU Emacs.
+;;
+;;; Commentary:
+;; Provides a way to list all connected teleport nodes and connect to them via TRAMP.
 ;;
 ;;; Code:
 
@@ -61,16 +64,16 @@ called"
 (defcustom teleport-list-nodes-show-hostname t
   "Show node's hostname in the list"
   :type 'boolean
-  :group 'teleport
-  )
+  :group 'teleport)
 
 (defcustom teleport-list-nodes-hostname-column ".hostname"
   "Column name to display node's hostname, should be unique and not
 overlap with any existing cmd_labels."
-  :type 'string)
+  :type 'string
+  :group 'teleport)
 
 (defconst teleport-tramp-method "tsh"
-  "Tramp method for teleport.")
+  "Tramp method name for teleport nodes.")
 
 (defvar-local teleport-list-nodes--current-directory nil)
 
@@ -112,8 +115,7 @@ parsed output in `(process-set process :output-json-symbol)'"
       (message "Teleport status process failed: %s, %s, stderr: %s"
                event
                (buffer-string)
-               (with-current-buffer (process-get process :stderr-buffer) (buffer-string))
-               )))))
+               (with-current-buffer (process-get process :stderr-buffer) (buffer-string)))))))
 
 (defun teleport--display-current-buffer (&rest _)
   "Show current buffer in a new window"
@@ -336,7 +338,9 @@ asynchronously and returns cached results."
                           cmd-labels-path)))
 
 (defun teleport--refresh-available-spec (nodes)
-  "Iterate over NODES and collect all unique cmd_labels names. Stores them in `teleport-list-nodes-fields'"
+  "Iterate over NODES and collect all unique cmd_labels names.
+Stores them in `teleport-list-nodes-fields'"
+
   ;; Collect all available cmd_labels path from spec. `cmd-labels-path' is a list
   ;; of (label . path), where path is a list of strings showing full path in
   ;; node's JSON
@@ -345,7 +349,7 @@ asynchronously and returns cached results."
           (if teleport-list-nodes-show-hostname
               ;;FIXME: what if cmd_labels also have 'hostname'? tabulated mode
               ;;does not expect duplicate column names.
-              (cons '("hostname" ("hostname")) cmd-labels-path)
+              (cons '(teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)
             cmd-labels-path)))
 
       ;; Find which specs are missing from `teleport-list-nodes-fields', compare only 'path' field
@@ -471,7 +475,7 @@ no such property exist."
 (defun teleport-list-nodes--set-default-directory ()
   "Set the default directory to point on the remote node."
   (let (switch-default-directory)
-    (map-keymap-internal (lambda (event function)
+    (map-keymap-internal (lambda (_event function)
                            (when (eq this-command function)
                              (setq switch-default-directory t)))
                          teleport-list-nodes-mode-map)
