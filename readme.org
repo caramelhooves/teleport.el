@@ -1,19 +1,65 @@
 #+title: Teleport for Emacs
 
-* Installation
-#+begin_src elisp
-(use-package! teleport
-  :host github
-  :type git
-  :repo "caramelhooves/teleport.el"
-* Configuration
-#+begin_src elisp
-(use-package teleport
-  :config
-    (teleport-tramp-add-method)
+* Introduction
+[[https://goteleport.com/][Gravitational Teleport]] is an open-source access platform that facilitates secure access to remote servers, Kubernetes clusters, and databases. This Emacs package seamlessly integrates with the Teleport command line tool (tsh), providing a similar experience to accessing remote hosts via SSH.
 
+Key features include TRAMP integration, which enables file editing on remote hosts and file manipulation using Dired. Moreover, it offers the capability to initiate remote terminal sessions. This package is designed to enhance your Emacs environment by leveraging the power of Gravitational Teleport.
+
+* Installation and configuration
+This guide assumes that you have already installed the [[https://goteleport.com/docs/installation/][teleport CLI]] and =tsh= is in your =PATH=.
+
+Begin by cloning the repository:
+#+begin_src sh
+git clone https://github.com/caramelhooves/teleport.el teleport
+#+end_src
+
+Then, add the package to your [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Lisp-Libraries.html][load path]]:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "darkman")
+#+end_src
+Finally, load the package:
+#+begin_src emacs-lisp
+(require 'teleport)
+(teleport-tramp-add-method)
+#+end_src
+Or for users of [[https://jwiegley.github.io/use-package/][use-package]], simply add this piece of code to your config:
+#+begin_src emacs-lisp
+(use-package teleport
+  :init
+  (teleport-tramp-add-method)
+
+  ;; Commands from this keymap are called with `default-directory' set to the remote host when called from `teleport-list-nodes' mode.
   :bind (:map teleport-list-nodes-mode-map
               ("v" . vterm)
-              ("e" . eat)
+              ("t" . term)
               ("d" . dired)))
+#+end_src
+* List of teleport nodes
+You can list all connected Teleport nodes by calling the =teleport-list-nodes= function. This will open a new buffer displaying a table of connected nodes and their labels.
+
+The Teleport list mode inherits its key bindings from [[https://www.gnu.org/software/emacs/manual/html_node/emacs-lisp/Tabulated-List-Mode.html][Tabulated List Mode]] and adds several custom bindings:
+
+| Key | Action                                               |
+|-----+------------------------------------------------------|
+| =k=   | Hide current column                                  |
+| =r=   | Un-hide all hidden columns                           |
+| =G=   | Fetch list of nodes again and update the buffer      |
+| =g=   | Update the buffer without fetching list of nodes     |
+| =i=   | Copy node UUID                                       |
+| =c=   | Open customize interface to customize hidden labels  |
+| =/ p= | Hide all nodes which field does not match the regexp |
+
+When a command is invoked in =teleport-list-nodes-mode=, the system checks if the commands exist in the =teleport-list-nodes-mode-map= and adjusts the =default-directory= to point to the remote host at point. As a result, most commands will be executed locally, and only those added to the mode keymap are executed on the remote host. This prevents Emacs from unnecessarily accessing the remote host when you call unrelated commands, such as =switch-buffer=.
+
+* Integration with other packages
+The usefulness of this package is greatly enhanced by its integration with other Emacs packages.
+** Vterm
+[[https://github.com/akermu/emacs-libvterm][Vterm]] allows you to open a shell on the remote system directly from =teleport-list-nodes-mode=.
+
+Under normal circumstances, no additional integration is required - it just works. However, if the remote host does not have the same shell as your local host, you may need to configure the shell to be used. If you encounter an issue where the vterm session opens and then immediately closes, consider adding this snippet to your configuration:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'vterm
+    (add-to-list 'vterm-tramp-shells `(,teleport-tramp-method "/bin/bash")))
 #+end_src
