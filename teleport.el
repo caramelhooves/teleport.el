@@ -349,7 +349,7 @@ Stores them in `teleport-list-nodes-fields'"
           (if teleport-list-nodes-show-hostname
               ;;FIXME: what if cmd_labels also have 'hostname'? tabulated mode
               ;;does not expect duplicate column names.
-              (cons '(teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)
+              (cons `(,teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)
             cmd-labels-path)))
 
       ;; Find which specs are missing from `teleport-list-nodes-fields', compare only 'path' field
