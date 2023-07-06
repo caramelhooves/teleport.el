@@ -82,7 +82,7 @@ overlap with any existing cmd_labels."
   "Add teleport tramp method."
   (add-to-list
    'tramp-methods
-   `("tsh"
+   `(,teleport-tramp-method
      (tramp-login-program "tsh")
      (tramp-direct-async t)
      (tramp-login-args (("ssh") ("-l" "%u") ("%h")))
