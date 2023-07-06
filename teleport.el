@@ -35,18 +35,18 @@
                (const :tag "Hide" :inline t :value (:hidden t)))))
 
 (defcustom teleport-list-nodes-fields nil
-  "Columns to display in the teleport node list buffer"
+  "Columns to display in the teleport node list buffer."
   :group 'teleport
   :type '(repeat teleport-list-filed-config))
 
 
 (defcustom teleport-list-nodes-fields-width 20
-  "Default width of each column in the teleport list buffer"
+  "Default width of each column in the teleport list buffer."
   :group 'teleport
   :type 'integer)
 
 (defcustom teleport-list-nodes-buffer-name "*Teleport Nodes List*"
-  "Name of the teleport node list buffer"
+  "Name of the teleport node list buffer."
   :group 'teleport
   :type 'string)
 
@@ -55,21 +55,21 @@
      .
      teleport--display-current-buffer)
     (".*Password: " . teleport--read-password))
-  "Alist of patterns and functions to handle them. If the pattern
-is match in stderr output of tsh, the matching function is
-called"
+  "Alist of patterns and functions to handle them.
+If the pattern
+is match in stderr output of tsh, the matching function is called"
   :group 'teleport
   :type '(alist :key-type regex :value-type function))
 
 (defcustom teleport-list-nodes-show-hostname t
-  "Show node's hostname in the list"
+  "Show node's hostname in the list."
   :type 'boolean
   :group 'teleport)
 
 (defcustom teleport-list-nodes-hostname-column ".hostname"
-  "Column name to display node's hostname, should be unique and not
-overlap with any existing cmd_labels."
-  :type 'string
+  "Column name to display node's hostname.
+Should be unique and not
+overlap with any existing cmd_labels."   :type 'string
   :group 'teleport)
 
 (defconst teleport-tramp-method "tsh"
@@ -93,8 +93,9 @@ overlap with any existing cmd_labels."
      teleport-tramp-method '((teleport-tramp-completion ""))))
 
 (defun teleport--tsh-sentinel (process event)
-  "Sentinel for caching tsh commands output process. Stores JSON
-parsed output in `(process-set process :output-json-symbol)'"
+  "Process sentinel for tsh -f json commands.
+Parse and store output of PROCESS in `(process-set process :output-json-symbol)'
+if EVENT indicates a failure, display an error message with the buffer content."
   ;;TODO handle errors as described in the docs
   ;;(info "elisp#Accepting Output")
   (with-current-buffer (process-buffer process)
@@ -117,15 +118,17 @@ parsed output in `(process-set process :output-json-symbol)'"
                (with-current-buffer (process-get process :stderr-buffer) (buffer-string)))))))
 
 (defun teleport--display-current-buffer (&rest _)
-  "Show current buffer in a new window"
+  "Show current buffer in a new window."
   (display-buffer (current-buffer)))
 
 (defun teleport--read-password (tsh-process)
-  "Read password from minibuffer"
+  "Read password from minibuffer and inject it into stdin of TSH-PROCESS."
   (process-send-string
    tsh-process (format "%s\n" (read-passwd (buffer-string)))))
 
 (defun teleport--tsh-stderr-filter (process output)
+  "Process filter for OUTPUT of tsh -f json commands.
+If PROCESS requires a password, read it from minibuffer and inject it into stdin."
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
     (insert output)
@@ -135,6 +138,9 @@ parsed output in `(process-set process :output-json-symbol)'"
         (funcall (cdr prompt) (process-get process :main-process))))))
 
 (defun teleport--tsh-stderr-sentinel (process event)
+  "Process sentinel for `make-pipe-process'.
+If PROCESS fails, display an error message with the buffer content.
+EVENT is the event that caused the process to exit."
   (with-current-buffer (process-buffer process)
     (cond
      ((string= event "finished\n")
@@ -148,7 +154,8 @@ parsed output in `(process-set process :output-json-symbol)'"
 (defun teleport--tsh-cmd-async
     (output-json-symbol
      process-symbol completion-notification &rest cmd)
-  "Start 'cmd' asynchronously and stores the output in `output-symbol'."
+  "Start CMD asynchronously and store the output in OUTPUT-JSON-SYMBOL.
+Store process object in PROCESS-SYMBOL. When the process finishes, call COMPLETION-NOTIFICATION."
   (let ((output-buffer (generate-new-buffer "*tsh-cmd-async*" t))
         (stderr-process
          (make-pipe-process
@@ -173,8 +180,8 @@ parsed output in `(process-set process :output-json-symbol)'"
       (set process-symbol process))))
 
 (defun teleport--tsh-cmd-async-cached (output-json-symbol process-symbol completion-notification &rest cmd)
-  "Start 'cmd' asynchronously if `process-symbol' process is not
-running. Store the result in `output-json-symbol'."
+  "Start CMD asynchronously if PROCESS-SYMBOL process is not running.
+Store the result in OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when done."
 
   (unless completion-notification
     (setq completion-notification
@@ -191,14 +198,14 @@ running. Store the result in `output-json-symbol'."
   (symbol-value output-json-symbol))
 
 (defvar teleport--nodes-async-cache []
-  "Cached vector of teleport nodes")
+  "Cached vector of teleport nodes.")
 
 (defvar teleport--nodes-async-process nil
-  "Background process for async completion")
+  "Background process for async completion.")
 
 (defun teleport--get-nodes-async-cached
     (&optional completion-notification)
-  "Returns cached list of teleport nodes"
+  "Return cached list of teleport nodes. Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
                                   completion-notification
@@ -208,14 +215,14 @@ running. Store the result in `output-json-symbol'."
                                   "json"))
 
 (defvar teleport--logins-async-cache '(nil)
-  "Cached hashtable of available teleport nodes")
+  "Cached hashtable of available teleport nodes.")
 
 (defvar teleport--logins-async-process nil
-  "Background process for async completion")
+  "Background process for async completion.")
 
 (defun teleport--status-completion-async-cached
     (&optional completion-notification)
-  "Returns cached list of logins available"
+  "Return cached list of logins available. Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
                                   'teleport--logins-async-process
                                   completion-notification
@@ -225,11 +232,11 @@ running. Store the result in `output-json-symbol'."
                                   "json"))
 
 (defconst teleport--internal-join-login "-teleport-internal-join"
-  "Teleport login used to observe an existing session, it is
-  filtered out from the list of available logins")
+  "Teleport login used to observe an existing session.
+It is filtered out from the list of available logins")
 
 (defun teleport--get-logins (status)
-  "Returns a list of logins from the status output"
+  "Return a list of logins from the STATUS output."
   (when status
     (let ((logins (gethash "logins" (gethash "active" status))))
       (seq-remove
@@ -238,8 +245,8 @@ running. Store the result in `output-json-symbol'."
        logins))))
 
 (defun teleport-tramp-completion (&optional _)
-  "Return list of tramp completion. The function runs
-asynchronously and returns cached results."
+  "Return list of tramp completion.
+The function runs asynchronously and returns cached results."
   (let* ((nodes (teleport--get-nodes-async-cached))
          (status (teleport--status-completion-async-cached))
          (logins (teleport--get-logins status)))
@@ -251,7 +258,7 @@ asynchronously and returns cached results."
 
 (defun teleport--completion-annotation-all-fields
     (metadata &optional prefix)
-  "Format an annotation string by printing all fields in METADATA."
+  "Format an annotation string by printing all fields in METADATA. PREFIX is prepended to the field name."
   (cl-loop
    for key being the hash-key of metadata
    for value =(gethash key metadata)
@@ -269,12 +276,13 @@ asynchronously and returns cached results."
   (seq-elt sequence (- (length sequence) 1)))
 
 (defun teleport-list-nodes--column-name ()
+  "Return column name at point."
   (or
    (get-text-property (point) 'tabulated-list-column-name)
    (car (teleport--seq-last tabulated-list-format))))
 
 (defun teleport-list-nodes-mode--kill-column ()
-  "Hide the column at point"
+  "Hide the column at point."
   (interactive)
   (let ((col (cl-find
    (teleport-list-nodes--column-name)
@@ -285,6 +293,7 @@ asynchronously and returns cached results."
   (teleport-list--refresh-buffer))
 
 (defun teleport-mode--filter-by-pattern (pattern)
+  "Remove entries that do not match PATTERN."
   (interactive (list (read-regexp "Filter by regexp")))
   (let* ((col-name (teleport-list-nodes--column-name))
          (col-index
@@ -299,6 +308,7 @@ asynchronously and returns cached results."
   (tabulated-list-print t))
 
 (defun teleport-list-nodes--get-list-of-unique-cmd-labels (nodes)
+  "Return a list of unique cmd_labels from NODES."
   (cl-loop
    for node across nodes
    for spec = (gethash "spec" node)
@@ -339,8 +349,7 @@ Stores them in `teleport-list-nodes-fields'"
                              missing-specs))))))
 
 (defun teleport-list--calculate-list-format (nodes-fields)
-  "Calculate a vector suitable for `tabulated-list-format' from NODES-FIELDS(
-`teleport-list-nodes-fields')"
+  "Calculate a vector suitable for `tabulated-list-format' from NODES-FIELDS(`teleport-list-nodes-fields')."
   (let ((enabled-fields
          (seq-filter (lambda (x) (not (plist-get x :hidden))) nodes-fields)))
   (apply #'vector (mapcar (lambda (x) (list
@@ -349,6 +358,8 @@ Stores them in `teleport-list-nodes-fields'"
                                        t)) enabled-fields))))
 
 (defun teleport-list--refresh-buffer ()
+  "Refresh the buffer with the list of teleport nodes.
+Does not fetch the list of nodes. Could be used to un-do effects of `teleport-mode--filter-by-pattern'."
   (interactive)
   (with-current-buffer (get-buffer-create
                         teleport-list-nodes-buffer-name)
@@ -372,8 +383,7 @@ Stores them in `teleport-list-nodes-fields'"
   (teleport-list--update-modeline))
 
 (defun teleport-list-nodes-mode--reset-columns ()
-  "Remove any customization of the displayed columns and re-fill
-them with columns from the currently available nodes."
+  "Remove any customization of the displayed columns and re-fill them with the columns from the currently available nodes."
   (interactive)
   (setq teleport-list-nodes-fields nil)
   (teleport--refresh-available-spec teleport--nodes-async-cache)
@@ -388,8 +398,8 @@ them with columns from the currently available nodes."
   (customize-variable 'teleport-list-nodes-fields))
 
 (defun teleport-list-nodes-mode--copy-node-id ()
-  "Copy the node ID of the current node to the kill ring. The Node
-ID could be used to connect to the node: tsh ssh root@<node-id>"
+  "Copy the node ID of the current node to the kill ring.
+The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
   (interactive)
   (let ((node-id (tabulated-list-get-id)))
     (kill-new node-id)
@@ -408,7 +418,7 @@ ID could be used to connect to the node: tsh ssh root@<node-id>"
     map))
 
 (defun teleport--get-hash-map-nested (map &rest keys)
-  "Get nested value from VECTOR by KEYS"
+  "Get nested value from MAP by KEYS."
   (cl-loop
    for result = map then (gethash key result)
    for key in keys
@@ -416,8 +426,8 @@ ID could be used to connect to the node: tsh ssh root@<node-id>"
    finally return result))
 
 (defun teleport-list--get-node-label (spec prop-path)
-  "Get property by PROP-PATH from node's SPEC. Return empty string if
-no such property exist."
+  "Get property by PROP-PATH from node's SPEC.
+Return empty string if no such property exist."
   (or (apply #'teleport--get-hash-map-nested spec prop-path) ""))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
