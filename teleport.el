@@ -87,7 +87,7 @@ overlap with any existing cmd_labels."
      (tramp-direct-async t)
      (tramp-login-args (("ssh") ("-l" "%u") ("%h")))
      (tramp-copy-recursive nil)
-     (tramp-remote-shell "/bin/sh")
+     (tramp-remote-shell ,tramp-default-remote-shell)
      (tramp-remote-shell-args ("-i" "-c"))))
   (tramp-set-completion-function
      teleport-tramp-method '((teleport-tramp-completion ""))))
