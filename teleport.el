@@ -264,32 +264,6 @@ asynchronously and returns cached results."
    concat
    (format "%s%s: %s, " prefix key value)))
 
-(defun teleport--completion-format-field (fieldnames metadata)
-  "Format a field from METADATA. if the field is nil, return an empty string"
-  (let ((val (--reduce-from (gethash it acc) metadata fieldnames)))
-    (if (or (null val) (string= val ""))
-        ""
-      (format "%s: %s" (string-join fieldnames ".") val))))
-
-
-(defun teleport--completion-annotation-minimal (metadata &rest _)
-  "Format an annotation string, print only the most important fields."
-  (let* ((fields
-          (list
-           (teleport--completion-format-field '("addr") metadata)
-           (teleport--completion-format-field
-            '("hostname") metadata)))
-         (cmd_labels_metadata (gethash "cmd_labels" metadata))
-         (cmd_labels
-          (--map
-           (format "%s: %s"
-                   it
-                   (gethash
-                    "result" (gethash it cmd_labels_metadata)))
-           (hash-table-keys cmd_labels_metadata))))
-    (string-join (-remove #'string-empty-p (nconc fields cmd_labels))
-                 ", ")))
-
 (defun teleport--seq-last (sequence)
   "Return the last element of SEQUENCE."
   ;; I wonder why it is not implemented in `seq'
