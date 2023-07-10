@@ -128,7 +128,8 @@ if EVENT indicates a failure, display an error message with the buffer content."
 
 (defun teleport--tsh-stderr-filter (process output)
   "Process filter for OUTPUT of tsh -f json commands.
-If PROCESS requires a password, read it from minibuffer and inject it into stdin."
+If PROCESS requires a password, read it from minibuffer and
+inject it into stdin."
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
     (insert output)
@@ -155,7 +156,8 @@ EVENT is the event that caused the process to exit."
     (output-json-symbol
      process-symbol completion-notification &rest cmd)
   "Start CMD asynchronously and store the output in OUTPUT-JSON-SYMBOL.
-Store process object in PROCESS-SYMBOL. When the process finishes, call COMPLETION-NOTIFICATION."
+Store process object in PROCESS-SYMBOL. When the process
+terminates, call COMPLETION-NOTIFICATION."
   (let ((output-buffer (generate-new-buffer "*tsh-cmd-async*" t))
         (stderr-process
          (make-pipe-process
@@ -181,7 +183,8 @@ Store process object in PROCESS-SYMBOL. When the process finishes, call COMPLETI
 
 (defun teleport--tsh-cmd-async-cached (output-json-symbol process-symbol completion-notification &rest cmd)
   "Start CMD asynchronously if PROCESS-SYMBOL process is not running.
-Store the result in OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when done."
+Store the result in OUTPUT-JSON-SYMBOL and call
+COMPLETION-NOTIFICATION when done."
 
   (unless completion-notification
     (setq completion-notification
@@ -205,7 +208,8 @@ Store the result in OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when don
 
 (defun teleport--get-nodes-async-cached
     (&optional completion-notification)
-  "Return cached list of teleport nodes. Call COMPLETION-NOTIFICATION when a new list is available."
+  "Return cached list of teleport nodes.
+Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
                                   completion-notification
@@ -222,7 +226,8 @@ Store the result in OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when don
 
 (defun teleport--status-completion-async-cached
     (&optional completion-notification)
-  "Return cached list of logins available. Call COMPLETION-NOTIFICATION when a new list is available."
+  "Return cached list of logins available.
+Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
                                   'teleport--logins-async-process
                                   completion-notification
@@ -258,7 +263,8 @@ The function runs asynchronously and returns cached results."
 
 (defun teleport--completion-annotation-all-fields
     (metadata &optional prefix)
-  "Format an annotation string by printing all fields in METADATA. PREFIX is prepended to the field name."
+  "Format an annotation string by printing all fields in METADATA.
+PREFIX is prepended to the field name."
   (cl-loop
    for key being the hash-key of metadata
    for value =(gethash key metadata)
@@ -349,7 +355,11 @@ Stores them in `teleport-list-nodes-fields'"
                              missing-specs))))))
 
 (defun teleport-list--calculate-list-format (nodes-fields)
-  "Calculate a vector suitable for `tabulated-list-format' from NODES-FIELDS(`teleport-list-nodes-fields')."
+  "Return vector suitable for `tabulated-format-list'.
+Convert NODES-FIELDS(`teleport-list-nodes-fields') into format
+ accepted by `tabulated-mode'. Hidden fields are removed, field
+ width is set to `teleport-list-nodes-fields-width' if not
+ specified."
   (let ((enabled-fields
          (seq-filter (lambda (x) (not (plist-get x :hidden))) nodes-fields)))
   (apply #'vector (mapcar (lambda (x) (list
@@ -359,7 +369,8 @@ Stores them in `teleport-list-nodes-fields'"
 
 (defun teleport-list--refresh-buffer ()
   "Refresh the buffer with the list of teleport nodes.
-Does not fetch the list of nodes. Could be used to un-do effects of `teleport-mode--filter-by-pattern'."
+Does not fetch the list of nodes. Could be used to un-do effects
+of `teleport-mode--filter-by-pattern'."
   (interactive)
   (with-current-buffer (get-buffer-create
                         teleport-list-nodes-buffer-name)
@@ -383,7 +394,9 @@ Does not fetch the list of nodes. Could be used to un-do effects of `teleport-mo
   (teleport-list--update-modeline))
 
 (defun teleport-list-nodes-mode--reset-columns ()
-  "Remove any customization of the displayed columns and re-fill them with the columns from the currently available nodes."
+  "Reset state of the columns.
+Remove any customization of the displayed columns and re-fill
+them with the columns from the currently available nodes."
   (interactive)
   (setq teleport-list-nodes-fields nil)
   (teleport--refresh-available-spec teleport--nodes-async-cache)
