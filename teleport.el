@@ -483,7 +483,8 @@ Return empty string if no such property exist."
 \\{teleport-list-nodes-mode-map}"
   :group 'teleport
 
-  (setq-local teleport-list-nodes--current-directory default-directory)
+  (unless teleport-list-nodes--current-directory
+    (setq-local teleport-list-nodes--current-directory default-directory))
   (add-hook 'pre-command-hook #'teleport-list-nodes--set-default-directory 90 t)
   (add-hook 'post-command-hook #'teleport-list-nodes--restore-default-directory -90 t)
   (teleport-list--refresh-buffer)
