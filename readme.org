@@ -63,3 +63,21 @@ Under normal circumstances, no additional integration is required - it just work
 (with-eval-after-load 'vterm
     (add-to-list 'vterm-tramp-shells `(,teleport-tramp-method "/bin/bash")))
 #+end_src
+
+** Dired-rsync
+[[https://github.com/stsquad/dired-rsync][Dired-rsync]] is a fantastic package for efficiently and *asynchronously* copying files to and from remote hosts. With minor adjustments it could be configured to run over teleport:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'dired-rsync
+  (defun teleport--is-file-on-teleport (filename)
+    (if (tramp-tramp-file-p filename)
+        (with-parsed-tramp-file-name filename v
+          (string= v-method teleport-tramp-method))))
+
+  (defun teleport-rsync-advice (orig-func sfiles dest)
+    (if (or (teleport--is-file-on-teleport (car sfiles)) (teleport--is-file-on-teleport dest))
+        (let ((dired-rsync-options (format "%s %s" dired-rsync-options "-e \"tsh ssh\"")))
+          (funcall orig-func sfiles dest))
+      (funcall orig-func sfiles dest)))
+  (advice-add 'dired-rsync--remote-to-from-local-cmd :around #'teleport-rsync-advice))
+#+end_src
