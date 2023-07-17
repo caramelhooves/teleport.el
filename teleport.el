@@ -1,6 +1,7 @@
 ;;; teleport.el --- Emacs integration for tsh (goteleport.com) -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2023 Caramel Hooves
+;; SPDX-License-Identifier: GPL-3.0-only
 ;;
 ;; Author: Caramel Hooves <caramel.hooves@protonmail.com>
 ;; Maintainer: Caramel Hooves <caramel.hooves@protonmail.com>
