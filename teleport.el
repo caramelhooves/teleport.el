@@ -444,6 +444,8 @@ Return empty string if no such property exist."
   (or (apply #'teleport--get-hash-map-nested spec prop-path) ""))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
+  "Generate a value suitable for `tabulated-list-entries'.
+Extract the values of the properties specified in LIST-FORMAT from NODES."
   (cl-loop
    for node across nodes
    for spec = (gethash "spec" node)
@@ -458,6 +460,7 @@ Return empty string if no such property exist."
              collect (teleport-list--get-node-label spec (plist-get p :path)))))))
 
 (defun teleport-list--update-modeline ()
+  "Update the modeline to show the status of the async processes."
   (setq mode-line-process
         (format "%s%s"
                 (if (process-live-p teleport--nodes-async-process)
