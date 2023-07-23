@@ -31,9 +31,9 @@ Users of [[https://jwiegley.github.io/use-package/][use-package]] can add this p
               ("d" . dired)))
 #+end_src
 * List of teleport nodes
-You can list all connected Teleport nodes by calling the =teleport-list-nodes= function. This will open a new buffer displaying a table of connected nodes and their labels.
+You can list all connected Teleport nodes by calling =teleport-list-nodes= command. It opens a new buffer with a table of connected nodes and their labels.
 
-The Teleport list mode inherits its key bindings from [[https://www.gnu.org/software/emacs/manual/html_node/emacs-lisp/Tabulated-List-Mode.html][Tabulated List Mode]] and adds several custom bindings:
+=teleport-list-mode= inherits its key bindings from [[https://www.gnu.org/software/emacs/manual/html_node/emacs-lisp/Tabulated-List-Mode.html][Tabulated List Mode]] and adds a few mode specific bindings:
 
 | Key | Action                                               |
 |-----+------------------------------------------------------|
@@ -45,7 +45,7 @@ The Teleport list mode inherits its key bindings from [[https://www.gnu.org/soft
 | =c=   | Open customize interface to customize hidden labels  |
 | =/ p= | Hide all nodes which field does not match the regexp |
 
-When a command is invoked in =teleport-list-nodes-mode=, the system checks if the commands exist in the =teleport-list-nodes-mode-map= and adjusts the =default-directory= to point to the remote host at point. As a result, most commands will be executed locally, and only those added to the mode keymap are executed on the remote host. This prevents Emacs from unnecessarily accessing the remote host when you call unrelated commands, such as =switch-buffer=.
+When a command is invoked in =teleport-list-nodes-mode=, the mode checks if the commands exist in the =teleport-list-nodes-mode-map= and sets the =default-directory= to point to the node at point. As a result, most commands will be executed locally, and only those added to the mode keymap are executed on the remote host. This prevents Emacs from unnecessarily accessing the remote host when you call unrelated commands, such as =switch-buffer=.
 
 * Integration with other packages
 The usefulness of this package is greatly enhanced by its integration with other Emacs packages.
