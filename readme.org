@@ -65,7 +65,7 @@ Under normal circumstances, no additional integration is required - it just work
 #+begin_src emacs-lisp
 (with-eval-after-load 'dired-rsync
   (defun teleport--is-file-on-teleport (filename)
-    (if (tramp-tramp-file-p filename)
+    (when (tramp-tramp-file-p filename)
         (with-parsed-tramp-file-name filename v
           (string= v-method teleport-tramp-method))))
 
