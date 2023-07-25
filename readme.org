@@ -8,7 +8,7 @@ Key features include TRAMP integration, which enables file editing on remote hos
 * Installation and configuration
 This guide assumes that you have already installed the [[https://goteleport.com/docs/installation/][teleport CLI]] and =tsh= is in your =PATH=.
 
-The package is available on [[https://melpa.org/#/telepathy][MELPA]]. Install it by evaluating
+The package is available on [[https://melpa.org/#/teleport][MELPA]]. Install it by evaluating
 #+begin_src sh
 (package-install 'teleport)
 #+end_src
