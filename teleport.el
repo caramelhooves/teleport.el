@@ -300,8 +300,10 @@ PREFIX is prepended to the field name."
   (teleport-list--refresh-buffer))
 
 (defun teleport-mode--filter-by-pattern (pattern)
-  "Remove entries that do not match PATTERN."
-  (interactive (list (read-regexp "Filter by regexp")))
+  "Remove entries that do not match PATTERN.
+The PATTERN is applied to the column at point."
+  (interactive (list (read-regexp (format "Filter by regexp in column \"%s\"" (teleport-list-nodes--column-name)))))
+
   (let* ((col-name (teleport-list-nodes--column-name))
          (col-index
           (cl-position col-name tabulated-list-format
