@@ -35,15 +35,16 @@ You can list all connected Teleport nodes by calling =teleport-list-nodes= comma
 
 =teleport-list-mode= inherits its key bindings from [[https://www.gnu.org/software/emacs/manual/html_node/emacs-lisp/Tabulated-List-Mode.html][Tabulated List Mode]] and adds a few mode specific bindings:
 
-| Key | Action                                               |
-|-----+------------------------------------------------------|
-| =k=   | Hide current column                                  |
-| =r=   | Un-hide all hidden columns                           |
-| =G=   | Fetch list of nodes again and update the buffer      |
-| =g=   | Update the buffer without fetching list of nodes     |
-| =i=   | Copy node UUID                                       |
-| =c=   | Open customize interface to customize hidden labels  |
-| =/ p= | Hide all nodes which field does not match the regexp |
+| Key | Action                                                                 |
+|-----+------------------------------------------------------------------------|
+| =k=   | Hide current column                                                    |
+| =r=   | Un-hide all hidden columns                                             |
+| =G=   | Fetch list of nodes again and update the buffer                        |
+| =g=   | Update the buffer without fetching list of nodes                       |
+| =i=   | Copy node UUID                                                         |
+| =c=   | Open customize interface to customize hidden labels                    |
+| =/ p= | Add a filter. All nodes with field not matching the regexp are removed |
+| =/ r= | Reset the filers                                                       |
 
 When a command is invoked in =teleport-list-nodes-mode=, the mode checks if the commands exist in the =teleport-list-nodes-mode-map= and sets the =default-directory= to point to the node at point. As a result, most commands will be executed locally, and only those added to the mode keymap are executed on the remote host. This prevents Emacs from unnecessarily accessing the remote host when you call unrelated commands, such as =switch-buffer=.
 

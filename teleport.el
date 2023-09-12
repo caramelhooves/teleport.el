@@ -78,6 +78,7 @@ overlap with any existing cmd_labels."   :type 'string
 
 (defvar-local teleport-list-nodes--default-directory nil)
 
+(defvar-local teleport-list-nodes--filter-by-pattern '())
 ;;;###autoload
 (defun teleport-tramp-add-method ()
   "Add teleport tramp method."
@@ -299,22 +300,39 @@ PREFIX is prepended to the field name."
     (plist-put col :hidden t))
   (teleport-list--refresh-buffer))
 
-(defun teleport-mode--filter-by-pattern (pattern)
-  "Remove entries that do not match PATTERN.
-The PATTERN is applied to the column at point."
-  (interactive (list (read-regexp (format "Filter by regexp in column \"%s\"" (teleport-list-nodes--column-name)))))
+(defun teleport-mode--filter-by-pattern (column pattern)
+  "Add a filter for list of nodes.
+Only nodes with COLUMN matching PATTERN will be shown. The filter
+could be applied to multiple columns. To remove the filter, use `teleport-mode--reset-filter-by-pattern'."
+  (interactive (list (completing-read "Filter in column: "
+                                      (mapcar (lambda (x) (plist-get x :name)) teleport-list-nodes-fields)
+                                      #'identity
+                                      t
+                                      (cons (teleport-list-nodes--column-name) 0))
+                (read-regexp "Filter by regexp: ")))
+  (add-to-list teleport-list-nodes--filter-by-pattern (cons column pattern))
+  (teleport-list--refresh-buffer))
 
-  (let* ((col-name (teleport-list-nodes--column-name))
-         (col-index
-          (cl-position col-name tabulated-list-format
+(defun teleport-mode--apply-filter-by-pattern (list-of-patterns)
+  "Remove entries that do not match patterns in LIST-OF-PATTERNS."
+
+  (cl-loop
+   for (column . pattern) in list-of-patterns
+   for col-index = (cl-position column tabulated-list-format
                        :key #'car
-                       :test #'string=)))
+                       :test #'string=)
+   do
     (setq tabulated-list-entries
           (cl-remove-if-not
            (lambda (x) (string-match pattern x))
            tabulated-list-entries
-           :key (lambda (x) (elt (cadr x) col-index)))))
-  (tabulated-list-print t))
+           :key (lambda (x) (elt (cadr x) col-index))))))
+
+(defun teleport-mode--reset-filter-by-pattern ()
+  "Remove all filters."
+  (interactive)
+  (setq teleport-list-nodes--filter-by-pattern '())
+  (teleport-list--refresh-buffer))
 
 (defun teleport-list-nodes--get-list-of-unique-cmd-labels (nodes)
   "Return a list of unique cmd_labels from NODES."
@@ -386,6 +404,7 @@ of `teleport-mode--filter-by-pattern'."
           (teleport-list--nodes-mode-entries
            teleport--nodes-async-cache
            teleport-list-nodes-fields))
+    (teleport-mode--apply-filter-by-pattern teleport-list-nodes--filter-by-pattern)
     (tabulated-list-init-header)
     (tabulated-list-print t)
     (teleport-list--update-modeline)))
@@ -431,6 +450,7 @@ The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
     (define-key map "G" 'teleport-list-nodes-mode--update-list)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
+    (define-key map (kbd "/ r") 'teleport-mode--reset-filter-by-pattern)
     map))
 
 (defun teleport--get-hash-map-nested (map &rest keys)
