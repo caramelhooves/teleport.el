@@ -76,7 +76,7 @@ overlap with any existing cmd_labels."   :type 'string
 (defconst teleport-tramp-method "tsh"
   "Tramp method name for teleport nodes.")
 
-(defvar-local teleport-list-nodes--current-directory nil)
+(defvar-local teleport-list-nodes--default-directory nil)
 
 ;;;###autoload
 (defun teleport-tramp-add-method ()
@@ -489,7 +489,7 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
 (defun teleport-list-nodes--restore-default-directory ()
   "Restore the default directory to the one used to open nodes list."
   (setq-local default-directory
-              teleport-list-nodes--current-directory))
+              teleport-list-nodes--default-directory))
 
 (define-derived-mode
   teleport-list-nodes-mode
@@ -500,8 +500,8 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
 \\{teleport-list-nodes-mode-map}"
   :group 'teleport
 
-  (unless teleport-list-nodes--current-directory
-    (setq-local teleport-list-nodes--current-directory default-directory))
+  (unless teleport-list-nodes--default-directory
+    (setq-local teleport-list-nodes--default-directory default-directory))
   (add-hook 'pre-command-hook #'teleport-list-nodes--set-default-directory 90 t)
   (add-hook 'post-command-hook #'teleport-list-nodes--restore-default-directory -90 t)
   (teleport-list--refresh-buffer)
