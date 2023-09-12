@@ -509,10 +509,13 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
 
 ;;;###autoload
 (defun teleport-list-nodes ()
-  "List all teleport nodes."
+  "List all teleport nodes.
+Create a buffer with a list of available teleport nodes or switch
+to an existing one."
   (interactive)
   (switch-to-buffer teleport-list-nodes-buffer-name)
-  (teleport-list-nodes-mode))
+  (if (not (eq major-mode 'teleport-list-nodes-mode))
+      (teleport-list-nodes-mode)))
 
 (provide 'teleport)
 ;;; teleport.el ends here
