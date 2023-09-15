@@ -310,7 +310,7 @@ could be applied to multiple columns. To remove the filter, use `teleport-mode--
                                       t
                                       (cons (teleport-list-nodes--column-name) 0))
                 (read-regexp "Filter by regexp: ")))
-  (add-to-list teleport-list-nodes--filter-by-pattern (cons column pattern))
+  (add-to-list 'teleport-list-nodes--filter-by-pattern (cons column pattern))
   (teleport-list--refresh-buffer))
 
 (defun teleport-mode--apply-filter-by-pattern (list-of-patterns)
