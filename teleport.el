@@ -117,7 +117,12 @@ if EVENT indicates a failure, display an error message with the buffer content."
       (message "Teleport process failed: %s, %s, stderr: %s"
                event
                (buffer-string)
-               (with-current-buffer (process-get process :stderr-buffer) (buffer-string)))))))
+               (with-current-buffer (process-get process :stderr-buffer) (buffer-string)))
+      (teleport-list--update-modeline-from-anywhere)))))
+
+(defun teleport-list--update-modeline-from-anywhere ()
+  (with-current-buffer teleport-list-nodes-buffer-name
+        (teleport-list--update-modeline)))
 
 (defun teleport--display-current-buffer (&rest _)
   "Show current buffer in a new window."
