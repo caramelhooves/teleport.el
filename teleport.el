@@ -114,7 +114,7 @@ if EVENT indicates a failure, display an error message with the buffer content."
         (kill-buffer (current-buffer))
         (funcall completion-notification)))
      (t
-      (message "Teleport status process failed: %s, %s, stderr: %s"
+      (message "Teleport process failed: %s, %s, stderr: %s"
                event
                (buffer-string)
                (with-current-buffer (process-get process :stderr-buffer) (buffer-string)))))))
