@@ -39,9 +39,11 @@ You can list all connected Teleport nodes by calling =teleport-list-nodes= comma
 |-----+------------------------------------------------------------------------|
 | =k=   | Hide current column                                                    |
 | =r=   | Un-hide all hidden columns                                             |
-| =G=   | Fetch list of nodes again and update the buffer                        |
+| =m=   | Mark node under cursor                                           |
+| =u=   | Un-mark node under cursor                                        |
 | =g=   | Update the buffer without fetching list of nodes                       |
-| =i=   | Copy node UUID                                                         |
+| =G=   | Fetch list of nodes again and update the buffer                        |
+| =i=   | Copy UUID of marked nods or the node under cursor                      |
 | =c=   | Open customize interface to customize hidden labels                    |
 | =/ p= | Add a filter. All nodes with field not matching the regexp are removed |
 | =/ r= | Reset the filers                                                       |

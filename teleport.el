@@ -121,6 +121,7 @@ if EVENT indicates a failure, display an error message with the buffer content."
       (teleport-list--update-modeline-from-anywhere)))))
 
 (defun teleport-list--update-modeline-from-anywhere ()
+  "Update modeline for teleport buffer."
   (with-current-buffer teleport-list-nodes-buffer-name
         (teleport-list--update-modeline)))
 
@@ -437,23 +438,48 @@ them with the columns from the currently available nodes."
   (interactive)
   (customize-variable 'teleport-list-nodes-fields))
 
-(defun teleport-list-nodes-mode--copy-node-id ()
-  "Copy the node ID of the current node to the kill ring.
+(defun teleport-list-nodes--get-ids ()
+  "Return a list of tagged IDs.
+If no nodes are tagged, return node at point"
+  (let (;; Match non-space in the first n characters.
+        (re (format "^ \\{0,%d\\}[^ ]" (1- tabulated-list-padding))))
+    (let ((tagged-nodes
+           (save-excursion (goto-char (point-min))
+                           (loop
+                            while (re-search-forward re nil 'noerror)
+                            collect (tabulated-list-get-id)))))
+      (or tagged-nodes (list (tabulated-list-get-id))))))
+
+(defun teleport-list-nodes-mode--copy-nodes-id ()
+  "Copy the IDs of the tagged nodes to the kill ring.
 The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
   (interactive)
-  (let ((node-id (tabulated-list-get-id)))
-    (kill-new node-id)
-    (message "Copied node ID %s to the kill ring" node-id)))
+  (let ((nodes-id
+         (mapconcat #'identity (teleport-list-nodes--get-ids) " ")))
+    (kill-new nodes-id)
+    (message "Copied node ID %s to the kill ring" nodes-id)))
+
+(defun teleport-list-nodes-mode--mark-for-command ()
+  "Mark the current node for a command."
+  (interactive)
+  (tabulated-list-put-tag "*" t))
+
+(defun teleport-list-nodes-mode--unmark-for-command ()
+  "Remove the mark from the current node."
+  (interactive)
+  (tabulated-list-put-tag " " t))
 
 (defvar teleport-list-nodes-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
     (define-key map "k" 'teleport-list-nodes-mode--kill-column)
     (define-key map "g" 'teleport-list--refresh-buffer)
-    (define-key map "i" 'teleport-list-nodes-mode--copy-node-id)
+    (define-key map "i" 'teleport-list-nodes-mode--copy-nodes-id)
     (define-key map "c" 'teleport-list-nodes-mode--customize-displayed-fields)
     (define-key map "G" 'teleport-list-nodes-mode--update-list)
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
+    (define-key map "m" 'teleport-list-nodes-mode--mark-for-command)
+    (define-key map "u" 'teleport-list-nodes-mode--unmark-for-command)
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     (define-key map (kbd "/ r") 'teleport-mode--reset-filter-by-pattern)
     map))
@@ -529,6 +555,7 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
 
   (unless teleport-list-nodes--default-directory
     (setq-local teleport-list-nodes--default-directory default-directory))
+  (setq-local tabulated-list-padding 3)
   (add-hook 'pre-command-hook #'teleport-list-nodes--set-default-directory 90 t)
   (add-hook 'post-command-hook #'teleport-list-nodes--restore-default-directory -90 t)
   (teleport-list--refresh-buffer)
