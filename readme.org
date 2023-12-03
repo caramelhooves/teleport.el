@@ -48,7 +48,12 @@ You can list all connected Teleport nodes by calling =teleport-list-nodes= comma
 | =/ p= | Add a filter. All nodes with field not matching the regexp are removed |
 | =/ r= | Reset the filers                                                       |
 
+* Running commands
+
 When a command is invoked in =teleport-list-nodes-mode=, the mode checks if the commands exist in the =teleport-list-nodes-mode-map= and sets the =default-directory= to point to the node at point. As a result, most commands will be executed locally, and only those added to the mode keymap are executed on the remote host. This prevents Emacs from unnecessarily accessing the remote host when you call unrelated commands, such as =switch-buffer=.
+
+** Running shell commands
+Nodes could be marked by pressing =m= and unmarked with =u=. Then =teleport-list-nodes-mode--do-shell-command= could be used to run the same command on all of the marked nodes. If no nodes marked, run the command for the nod under cursor. For each marked node a new buffer is created. For how to organise the buffers see [Window configuration](#window-configuration).
 
 * Integration with other packages
 The usefulness of this package is greatly enhanced by its integration with other Emacs packages.
@@ -78,4 +83,23 @@ Under normal circumstances, no additional integration is required - it just work
           (funcall orig-func sfiles dest))
       (funcall orig-func sfiles dest)))
   (advice-add 'dired-rsync--remote-to-from-local-cmd :around #'teleport-rsync-advice))
+#+end_src
+** Window configuration
+=teleport-list-nodes-mode--do-shell-command= could create a lot of new buffers, they could be managed based on their name which is controlled by =teleport-shell-command-buffer-name=.
+
+Create a new frame for each buffer
+#+begin_src emacs-lisp
+   (setq display-buffer-alist '(("^\\*Teleport Shell Command Output: .*" display-buffer-pop-up-frame)))
+#+end_src
+
+If you are using [Doom Emacs](https://github.com/doomemacs/doomemacs/) =set-popup= could be employed.
+#+begin_src emacs-lisp
+(set-popup-rule! "^\\*Teleport Shell Command Output"
+  :side 'bottom
+  :modeline t
+  :size 0.25
+  :actions '(display-buffer-in-side-window)
+  :select nil
+  :quit nil
+  :ttl t)
 #+end_src

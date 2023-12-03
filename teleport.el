@@ -70,11 +70,18 @@ is match in stderr output of tsh, the matching function is called"
 (defcustom teleport-list-nodes-hostname-column ".hostname"
   "Column name to display node's hostname.
 Should be unique and not
-overlap with any existing cmd_labels."   :type 'string
+overlap with any existing cmd_labels."
+  :type 'string
   :group 'teleport)
 
 (defconst teleport-tramp-method "tsh"
   "Tramp method name for teleport nodes.")
+
+(defcustom teleport-shell-command-buffer-name
+  "*Teleport Shell Command Output: %s*"
+  "Basename used for teleport shell buffers"
+    :group 'teleport
+    :type 'string)
 
 (defvar-local teleport-list-nodes--default-directory nil)
 
@@ -469,6 +476,19 @@ The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
   (interactive)
   (tabulated-list-put-tag " " t))
 
+(defun teleport-list-nodes-mode--do-shell-command (command &optional nodes)
+  "Execute a shell COMMAND on all NODES marked with '*' tag."
+  (interactive
+   (let ((nodes (teleport-list-nodes--get-ids)))
+     (list
+      ;; Ask the user for a command to run
+      (read-shell-command (format "! on %s: " nodes))
+      nodes)))
+  (dolist (node nodes)
+    (let* ((shell-command-buffer-name (format teleport-shell-command-buffer-name node))
+           (shell-command-buffer-name-async shell-command-buffer-name))
+      (shell-command (format "tsh ssh root@%s '%s' &" node command) shell-command-buffer-name shell-command-buffer-name))))
+
 (defvar teleport-list-nodes-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
@@ -480,6 +500,7 @@ The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
     (define-key map "r" 'teleport-list-nodes-mode--reset-columns)
     (define-key map "m" 'teleport-list-nodes-mode--mark-for-command)
     (define-key map "u" 'teleport-list-nodes-mode--unmark-for-command)
+    (define-key map (kbd "M-!") 'teleport-list-nodes-mode--do-shell-command)
     (define-key map (kbd "/ p") 'teleport-mode--filter-by-pattern)
     (define-key map (kbd "/ r") 'teleport-mode--reset-filter-by-pattern)
     map))
