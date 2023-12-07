@@ -452,7 +452,7 @@ If no nodes are tagged, return node at point"
         (re (format "^ \\{0,%d\\}[^ ]" (1- tabulated-list-padding))))
     (let ((tagged-nodes
            (save-excursion (goto-char (point-min))
-                           (loop
+                           (cl-loop
                             while (re-search-forward re nil 'noerror)
                             collect (tabulated-list-get-id)))))
       (or tagged-nodes (list (tabulated-list-get-id))))))
