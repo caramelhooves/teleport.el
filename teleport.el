@@ -10,7 +10,7 @@
 ;; Version: 0.0.1
 ;; Keywords: tools
 ;; Homepage: https://github.com/caramelhooves/teleport.el
-;; Package-Requires: ((emacs "27.1") (dash "2.18.0"))
+;; Package-Requires: ((emacs "28.1") (dash "2.18.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -515,8 +515,9 @@ The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
 
 (defun teleport-list--get-node-label (spec prop-path)
   "Get property by PROP-PATH from node's SPEC.
-Return empty string if no such property exist."
-  (or (apply #'teleport--get-hash-map-nested spec prop-path) ""))
+Return empty string if no such property exist. If the property
+contains newlines, replace them with backquoted \\n"
+  (string-replace "\n" "\\n" (or (apply #'teleport--get-hash-map-nested spec prop-path) "")))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   "Generate a value suitable for `tabulated-list-entries'.
