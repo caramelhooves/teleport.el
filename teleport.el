@@ -537,13 +537,21 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
 
 (defun teleport-list--format-modeline (process)
   "Return propertized FORMAT-LINE."
-  (let ((pstatus (process-status process)))
-    (cond
-     ((memq pstatus '(run open listen connect stop)) ":Nodes(Running)")
-     ((memq pstatus '(signal)) ":Nodes(Signal)")
-     ((and (memq pstatus '(exit)) (= 0 (process-exit-status process))) ":Nodes")
-     ((and (memq pstatus '(exit failed)) (/= 0 (process-exit-status process))) ":Nodes(Error)")
-     (t ":Nodes(Unknown State)" ))))
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mode-line mouse-1]
+      (lambda () (interactive) (pop-to-buffer (process-buffer process))))
+
+    (let ((pstatus (process-status process)))
+      (propertize
+       (cond
+        ((memq pstatus '(run open listen connect stop)) ":Nodes(Running)")
+        ((memq pstatus '(signal)) ":Nodes(Signal)")
+        ((and (memq pstatus '(exit)) (= 0 (process-exit-status process))) ":Nodes")
+        ((and (memq pstatus '(exit failed)) (/= 0 (process-exit-status process))) ":Nodes(Error)")
+        (t ":Nodes(Unknown State)" ))
+       'mouse-face 'mode-line-highlight
+       'help-echo (format "mouse-1: Open process error buffer")
+       'local-map map))))
 
 (defun teleport-list--update-modeline ()
   "Update the modeline to show the status of the async processes."
