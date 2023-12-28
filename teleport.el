@@ -535,16 +535,20 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
              unless (plist-get p :hidden)
              collect (teleport-list--get-node-label spec (plist-get p :path)))))))
 
+(defun teleport-list--format-modeline (process)
+  "Return propertized FORMAT-LINE."
+  (let ((pstatus (process-status process)))
+    (cond
+     ((memq pstatus '(run open listen connect stop)) ":Nodes(Running)")
+     ((memq pstatus '(signal)) ":Nodes(Signal)")
+     ((and (memq pstatus '(exit)) (= 0 (process-exit-status process))) ":Nodes")
+     ((and (memq pstatus '(exit failed)) (/= 0 (process-exit-status process))) ":Nodes(Error)")
+     (t ":Nodes(Unknown State)" ))))
+
 (defun teleport-list--update-modeline ()
   "Update the modeline to show the status of the async processes."
   (setq mode-line-process
-        (format "%s%s"
-                (if (process-live-p teleport--nodes-async-process)
-                    ":Nodes"
-                  "")
-                (if (process-live-p teleport--logins-async-cache)
-                    ":Logins"
-                  "")))
+        (teleport-list--format-modeline teleport--nodes-async-process))
   (force-mode-line-update t))
 
 (defun teleport-list-nodes--set-default-directory ()
