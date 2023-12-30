@@ -17,12 +17,15 @@ If installation succeeds, load the package:
 #+begin_src emacs-lisp
 (require 'teleport)
 (teleport-tramp-add-method)
+(add-to-list 'tramp-default-user-alist '("\\`tsh\\'" nil "root"))
 #+end_src
 Users of [[https://jwiegley.github.io/use-package/][use-package]] can add this piece of code to their config:
 #+begin_src emacs-lisp
 (use-package teleport
   :init
   (teleport-tramp-add-method)
+  (add-to-list 'tramp-default-user-alist
+             '("\\`tsh\\'" nil "root"))
 
   ;; Commands from this keymap are called with `default-directory' set to the remote host when called from `teleport-list-nodes' mode.
   :bind (:map teleport-list-nodes-mode-map

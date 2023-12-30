@@ -459,7 +459,7 @@ If no nodes are tagged, return node at point"
 
 (defun teleport-list-nodes-mode--copy-nodes-id ()
   "Copy the IDs of the tagged nodes to the kill ring.
-The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
+The Node ID could be used to connect to the node: tsh ssh <user>@<node-id>"
   (interactive)
   (let ((nodes-id
          (mapconcat #'identity (teleport-list-nodes--get-ids) " ")))
@@ -484,10 +484,12 @@ The Node ID could be used to connect to the node: tsh ssh root@<node-id>"
       ;; Ask the user for a command to run
       (read-shell-command (format "! on %s: " nodes))
       nodes)))
-  (dolist (node nodes)
-    (let* ((shell-command-buffer-name (format teleport-shell-command-buffer-name node))
+  (dolist (node-id nodes)
+    (let* ((shell-command-buffer-name (format teleport-shell-command-buffer-name node-id))
            (shell-command-buffer-name-async shell-command-buffer-name))
-      (shell-command (format "tsh ssh root@%s '%s' &" node command) shell-command-buffer-name shell-command-buffer-name))))
+      (shell-command (format "tsh ssh %s@%s '%s' &" (tramp-find-user teleport-tramp-method nil node-id) node-id command)
+                     shell-command-buffer-name
+                     shell-command-buffer-name))))
 
 (defvar teleport-list-nodes-mode-map
   (let ((map (make-sparse-keymap)))
@@ -567,10 +569,12 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
                              (setq switch-default-directory t)))
                          teleport-list-nodes-mode-map)
     (when switch-default-directory
-      (setq-local default-directory
-                  (format "/%s:root@%s:"
-                          teleport-tramp-method
-                          (tabulated-list-get-id))))))
+      (let ((node-id (tabulated-list-get-id)))
+        (setq-local default-directory
+                    (format "/%s:%s@%s:"
+                            teleport-tramp-method
+                            (tramp-find-user teleport-tramp-method nil node-id)
+                            node-id))))))
 
 
 (defun teleport-list-nodes--restore-default-directory ()
