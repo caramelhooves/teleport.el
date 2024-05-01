@@ -95,7 +95,9 @@ overlap with any existing cmd_labels."
      (tramp-login-program "tsh")
      (tramp-direct-async t)
      (tramp-login-args (("ssh") ("-l" "%u") ("%h")))
-     (tramp-copy-recursive nil)
+     (tramp-copy-program "tsh")
+     (tramp-copy-args (("scp") ("--preserve")))
+     (tramp-copy-keep-date t)
      (tramp-remote-shell ,tramp-default-remote-shell)
      (tramp-remote-shell-args ("-i" "-c"))))
   (tramp-set-completion-function
