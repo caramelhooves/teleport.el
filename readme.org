@@ -95,7 +95,7 @@ Create a new frame for each buffer
    (setq display-buffer-alist '(("^\\*Teleport Shell Command Output: .*" display-buffer-pop-up-frame)))
 #+end_src
 
-If you are using [Doom Emacs](https://github.com/doomemacs/doomemacs/) =set-popup= could be employed.
+If you are using [[https://github.com/doomemacs/doomemacs/][Doom Emacs]] =set-popup= could be employed.
 #+begin_src emacs-lisp
 (set-popup-rule! "^\\*Teleport Shell Command Output"
   :side 'bottom
