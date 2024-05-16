@@ -55,7 +55,9 @@
   '(("If browser window does not open automatically, open it by clicking on the link.*"
      .
      teleport--display-current-buffer)
-    (".*Password: " . teleport--read-password))
+    (".*Password: " . teleport--read-password)
+    ("Enter password for Teleport user .*" . teleport--read-password)
+    ("Enter your OTP token:" . teleport--read-password))
   "Alist of patterns and functions to handle them.
 If the pattern
 is match in stderr output of tsh, the matching function is called"
@@ -150,9 +152,8 @@ inject it into stdin."
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
     (insert output)
-    (goto-char (point-min))
     (dolist (prompt teleport-login-prompts)
-      (when (re-search-forward (car prompt) nil t)
+      (when (re-search-backward (car prompt) nil t)
         (funcall (cdr prompt) (process-get process :main-process))))))
 
 (defun teleport--tsh-stderr-sentinel (process event)
