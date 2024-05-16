@@ -81,7 +81,7 @@ overlap with any existing cmd_labels."
 
 (defcustom teleport-shell-command-buffer-name
   "*Teleport Shell Command Output: %s*"
-  "Basename used for teleport shell buffers"
+  "Basename used for teleport shell buffers."
     :group 'teleport
     :type 'string)
 
