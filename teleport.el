@@ -538,7 +538,7 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
              collect (teleport-list--get-node-label spec (plist-get p :path)))))))
 
 (defun teleport-list--format-modeline (process)
-  "Return propertized FORMAT-LINE."
+  "Return propertized FORMAT-LINE based on the status of PROCESS."
   (let ((map (make-sparse-keymap)))
     (define-key map [mode-line mouse-1]
       (lambda () (interactive) (pop-to-buffer (process-buffer process))))
