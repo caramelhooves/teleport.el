@@ -64,15 +64,9 @@ is match in stderr output of tsh, the matching function is called"
   :group 'teleport
   :type '(alist :key-type regex :value-type function))
 
-(defcustom teleport-list-nodes-show-hostname t
-  "Show node's hostname in the list."
-  :type 'boolean
-  :group 'teleport)
-
 (defcustom teleport-list-nodes-hostname-column ".hostname"
   "Column name to display node's hostname.
-Should be unique and not
-overlap with any existing cmd_labels."
+Should be unique and not overlap with any existing cmd_labels."
   :type 'string
   :group 'teleport)
 
@@ -372,11 +366,8 @@ Stores them in `teleport-list-nodes-fields'"
   ;; node's JSON
   (let* ((cmd-labels-path (teleport-list-nodes--get-list-of-unique-cmd-labels nodes))
          (all-specs-path
-          (if teleport-list-nodes-show-hostname
-              ;;FIXME: what if cmd_labels also have 'hostname'? tabulated mode
-              ;;does not expect duplicate column names.
-              (cons `(,teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)
-            cmd-labels-path)))
+          (cons `(,teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)
+          cmd-labels-path))
 
       ;; Find which specs are missing from `teleport-list-nodes-fields', compare only 'path' field
       (let ((missing-specs
