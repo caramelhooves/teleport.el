@@ -58,6 +58,15 @@ When a command is invoked in =teleport-list-nodes-mode=, the mode checks if the 
 ** Running shell commands
 Nodes could be marked by pressing =m= and unmarked with =u=. Then =teleport-list-nodes-mode--do-shell-command= could be used to run the same command on all of the marked nodes. If no nodes marked, run the command for the nod under cursor. For each marked node a new buffer is created. For how to organise the buffers see [Window configuration](#window-configuration).
 
+** Configuring per-host logins
+When running commands on remote hosts, teleport.el logins with user returned by
+`(tramp-find-user)`. You could configure it to use a specific user for a specific host.
+Assuming you want to login in hosts =lucky-onyx= and =rainbow-smooch= with user =caramelhooves=:
+#+begin_src emacs-lisp
+(add-to-list 'tramp-default-user-alist
+             `(,(format "\\`%s\\'" teleport-tramp-method)
+               "\\`\\(lucky-onyx\\|rainbow-smooch\\)\\'" "caramelhooves"))
+#+end_src
 * Integration with other packages
 The usefulness of this package is greatly enhanced by its integration with other Emacs packages.
 ** Vterm

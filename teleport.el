@@ -515,6 +515,12 @@ Return empty string if no such property exist. If the property
 contains newlines, replace them with backquoted \\n"
   (string-replace "\n" "\\n" (or (apply #'teleport--get-hash-map-nested spec prop-path) "")))
 
+(defun teleport-list--get-hostname (&optional pos)
+    "Return the hostname of the node at POS.
+It is assumed that the first column contains the hostname.
+See `teleport-list-nodes-hostname-column'"
+     (elt (tabulated-list-get-entry pos) 0))
+
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   "Generate a value suitable for `tabulated-list-entries'.
 Extract the values of the properties specified in LIST-FORMAT from NODES."
@@ -563,11 +569,11 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
                              (setq switch-default-directory t)))
                          teleport-list-nodes-mode-map)
     (when switch-default-directory
-      (let ((node-id (tabulated-list-get-id)))
+      (let ((node-id (tabulated-list-get-id)) (hostname (teleport-list--get-hostname)))
         (setq-local default-directory
                     (format "/%s:%s@%s:"
                             teleport-tramp-method
-                            (tramp-find-user teleport-tramp-method nil node-id)
+                            (tramp-find-user teleport-tramp-method nil hostname)
                             node-id))))))
 
 
