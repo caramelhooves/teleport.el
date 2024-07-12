@@ -51,6 +51,8 @@ You can list all connected Teleport nodes by calling =teleport-list-nodes= comma
 | =/ p= | Add a filter. All nodes with field not matching the regexp are removed |
 | =/ r= | Reset the filers                                                       |
 
+* Switching between teleport clusters
+If you work with multiple different teleport clusters (e.g. work & personal) you could swithch between them using =teleport-switch-to-cluster=.
 * Running commands
 
 When a command is invoked in =teleport-list-nodes-mode=, the mode checks if the commands exist in the =teleport-list-nodes-mode-map= and sets the =default-directory= to point to the node at point. As a result, most commands will be executed locally, and only those added to the mode keymap are executed on the remote host. This prevents Emacs from unnecessarily accessing the remote host when you call unrelated commands, such as =switch-buffer=.

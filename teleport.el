@@ -79,6 +79,9 @@ Should be unique and not overlap with any existing cmd_labels."
     :group 'teleport
     :type 'string)
 
+(defconst teleport--current-profile-path "~/.tsh/current-profile")
+(defconst teleport--keys-path "~/.tsh/keys/")
+
 (defvar-local teleport-list-nodes--default-directory nil)
 
 (defvar-local teleport-list-nodes--filter-by-pattern '())
@@ -574,6 +577,22 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
                             teleport-tramp-method
                             (tramp-find-user teleport-tramp-method nil hostname)
                             node-id))))))
+
+
+(defun teleport--list-clusters ()
+  "Return a list of clusters from ~/.tsh/keys."
+  (directory-files teleport--keys-path nil "^[^.].*"))
+
+
+(defun teleport-switch-to-cluster (cluster)
+  "Change the current active teleport server to CLUSTER.
+And update the list."
+  (interactive (list (completing-read "Choose a cluster to switch to: "
+                                          (teleport--list-clusters)
+                                          #'identity
+                                          t)))
+  (write-region cluster nil teleport--current-profile-path)
+  (teleport-list-nodes-mode--update-list))
 
 
 (defun teleport-list-nodes--restore-default-directory ()
