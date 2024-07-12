@@ -366,8 +366,7 @@ Stores them in `teleport-list-nodes-fields'"
   ;; node's JSON
   (let* ((cmd-labels-path (teleport-list-nodes--get-list-of-unique-cmd-labels nodes))
          (all-specs-path
-          (cons `(,teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)
-          cmd-labels-path))
+          (cons `(,teleport-list-nodes-hostname-column ("hostname")) cmd-labels-path)))
 
       ;; Find which specs are missing from `teleport-list-nodes-fields', compare only 'path' field
       (let ((missing-specs
