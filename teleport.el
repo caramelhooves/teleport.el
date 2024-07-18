@@ -119,7 +119,7 @@ if EVENT indicates a failure, display an error message with the buffer content."
              (process-get process :completion-notification)))
 
         (set output-symbol (json-parse-buffer))
-        (kill-buffer (current-buffer))
+        (kill-buffer)
         (funcall completion-notification)))
      (t
       (message "Teleport process failed: %s, %s, stderr: %s"
