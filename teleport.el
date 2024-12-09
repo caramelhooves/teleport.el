@@ -315,8 +315,9 @@ PREFIX is prepended to the field name."
 
 (defun teleport-mode--filter-by-pattern (column pattern)
   "Add a filter for list of nodes.
-Only nodes with COLUMN matching PATTERN will be shown. The filter
-could be applied to multiple columns. To remove the filter, use `teleport-mode--reset-filter-by-pattern'."
+Only nodes with COLUMN matching PATTERN will be shown.
+The filter could be applied to multiple columns.
+To remove the filter, use \\[teleport-mode--reset-filter-by-pattern]."
   (interactive (list (completing-read "Filter in column: "
                                       (mapcar (lambda (x) (plist-get x :name)) teleport-list-nodes-fields)
                                       #'identity
