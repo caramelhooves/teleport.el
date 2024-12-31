@@ -80,7 +80,8 @@ Should be unique and not overlap with any existing cmd_labels."
     :type 'string)
 
 (defcustom teleport-shell-program "tsh"
-  "The name of the Teleport Shell executable."
+  "The name of the Teleport Shell executable.
+Set it before calling `teleport-tramp-add-method'."
   :group 'teleport
   :type 'string)
 
@@ -98,10 +99,10 @@ Should be unique and not overlap with any existing cmd_labels."
   (add-to-list
    'tramp-methods
    `(,teleport-tramp-method
-     (tramp-login-program "tsh")
+     (tramp-login-program ,teleport-shell-program)
      (tramp-direct-async t)
      (tramp-login-args (("ssh") ("-l" "%u") ("%h")))
-     (tramp-copy-program "tsh")
+     (tramp-copy-program ,teleport-shell-program)
      (tramp-copy-args (("scp") ("--preserve")))
      (tramp-copy-keep-date t)
      (tramp-remote-shell ,tramp-default-remote-shell)
