@@ -79,8 +79,16 @@ Should be unique and not overlap with any existing cmd_labels."
     :group 'teleport
     :type 'string)
 
-(defconst teleport--current-profile-path "~/.tsh/current-profile")
-(defconst teleport--keys-path "~/.tsh/keys/")
+(defcustom teleport-shell-program "tsh"
+  "The name of the Teleport Shell executable.
+Set it before calling `teleport-tramp-add-method'."
+  :group 'teleport
+  :type 'string)
+
+(defcustom teleport-shell-config-directory "~/.tsh"
+  "The location of tsh configuration files, usually ~/.tsh."
+  :group 'teleport
+  :type 'string)
 
 (defvar-local teleport-list-nodes--default-directory nil)
 
@@ -91,10 +99,10 @@ Should be unique and not overlap with any existing cmd_labels."
   (add-to-list
    'tramp-methods
    `(,teleport-tramp-method
-     (tramp-login-program "tsh")
+     (tramp-login-program ,teleport-shell-program)
      (tramp-direct-async t)
      (tramp-login-args (("ssh") ("-l" "%u") ("%h")))
-     (tramp-copy-program "tsh")
+     (tramp-copy-program ,teleport-shell-program)
      (tramp-copy-args (("scp") ("--preserve")))
      (tramp-copy-keep-date t)
      (tramp-remote-shell ,tramp-default-remote-shell)
@@ -228,7 +236,7 @@ Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
                                   completion-notification
-                                  "tsh"
+                                  teleport-shell-program
                                   "ls"
                                   "-f"
                                   "json"))
@@ -246,7 +254,7 @@ Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
                                   'teleport--logins-async-process
                                   completion-notification
-                                  "tsh"
+                                  teleport-shell-program
                                   "status"
                                   "-f"
                                   "json"))
@@ -315,8 +323,9 @@ PREFIX is prepended to the field name."
 
 (defun teleport-mode--filter-by-pattern (column pattern)
   "Add a filter for list of nodes.
-Only nodes with COLUMN matching PATTERN will be shown. The filter
-could be applied to multiple columns. To remove the filter, use `teleport-mode--reset-filter-by-pattern'."
+Only nodes with COLUMN matching PATTERN will be shown.
+The filter could be applied to multiple columns.
+To remove the filter, use \\[teleport-mode--reset-filter-by-pattern]."
   (interactive (list (completing-read "Filter in column: "
                                       (mapcar (lambda (x) (plist-get x :name)) teleport-list-nodes-fields)
                                       #'identity
@@ -580,8 +589,10 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
 
 
 (defun teleport--list-clusters ()
-  "Return a list of clusters from ~/.tsh/keys."
-  (directory-files teleport--keys-path nil "^[^.].*"))
+  "Return a list of clusters from ~/.tsh/keys.
+See `teleport-shell-config-directory'."
+  (directory-files (expand-file-name "keys" teleport-shell-config-directory)
+                   nil "^[^.].*"))
 
 
 (defun teleport-switch-to-cluster (cluster)
@@ -591,7 +602,8 @@ And update the list."
                                           (teleport--list-clusters)
                                           #'identity
                                           t)))
-  (write-region cluster nil teleport--current-profile-path)
+  (write-region cluster nil (expand-file-name "current-profile"
+                                              teleport-shell-config-directory))
   (teleport-list-nodes-mode--update-list))
 
 
