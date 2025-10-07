@@ -81,9 +81,11 @@ Should be unique and not overlap with any existing cmd_labels."
 
 (defcustom teleport-shell-program "tsh"
   "The name of the Teleport Shell executable.
-Set it before calling `teleport-tramp-add-method'."
+Can be either a string (e.g., \"tsh\") or a list of strings for
+running tsh with a wrapper (e.g., \\='(\"toolbox\" \"run\" \"tsh\")).
+Should be set before calling `teleport-tramp-add-method'."
   :group 'teleport
-  :type 'string)
+  :type '(choice string (repeat string)))
 
 (defcustom teleport-shell-config-directory "~/.tsh"
   "The location of tsh configuration files, usually ~/.tsh."
@@ -96,19 +98,27 @@ Set it before calling `teleport-tramp-add-method'."
 ;;;###autoload
 (defun teleport-tramp-add-method ()
   "Add teleport tramp method."
+
+  (let (teleport--shell-program teleport--shell-args)
+  (cond
+   ((stringp teleport-shell-program) (setq teleport--shell-program teleport-shell-program ))
+   ((listp teleport-shell-program) (setq teleport--shell-program (car teleport-shell-program)
+                                         teleport--shell-args (list (cdr teleport-shell-program))))
+   (t (error "teleport-shell-program should be either a string or a list of strings")))
+
   (add-to-list
    'tramp-methods
    `(,teleport-tramp-method
-     (tramp-login-program ,teleport-shell-program)
+     (tramp-login-program ,teleport--shell-program)
      (tramp-direct-async t)
-     (tramp-login-args (("ssh") ("-l" "%u") ("%h")))
-     (tramp-copy-program ,teleport-shell-program)
-     (tramp-copy-args (("scp") ("--preserve")))
+     (tramp-login-args (,@teleport--shell-args ("ssh") ("-l" "%u") ("%h")))
+     (tramp-copy-program ,teleport--shell-program)
+     (tramp-copy-args (,@teleport--shell-args ("scp") ("--preserve")))
      (tramp-copy-keep-date t)
      (tramp-remote-shell ,tramp-default-remote-shell)
      (tramp-remote-shell-args ("-i" "-c"))))
   (tramp-set-completion-function
-     teleport-tramp-method '((teleport-tramp-completion ""))))
+     teleport-tramp-method '((teleport-tramp-completion "")))))
 
 (defun teleport--tsh-sentinel (process event)
   "Process sentinel for tsh -f json commands.
@@ -177,7 +187,7 @@ EVENT is the event that caused the process to exit."
 
 (defun teleport--tsh-cmd-async
     (output-json-symbol
-     process-symbol completion-notification &rest cmd)
+     process-symbol completion-notification cmd)
   "Start CMD asynchronously and store the output in OUTPUT-JSON-SYMBOL.
 Store process object in PROCESS-SYMBOL. When the process
 terminates, call COMPLETION-NOTIFICATION."
@@ -204,7 +214,7 @@ terminates, call COMPLETION-NOTIFICATION."
       (process-put stderr-process :main-process process)
       (set process-symbol process))))
 
-(defun teleport--tsh-cmd-async-cached (output-json-symbol process-symbol completion-notification &rest cmd)
+(defun teleport--tsh-cmd-async-cached (output-json-symbol process-symbol completion-notification cmd)
   "Start CMD asynchronously if PROCESS-SYMBOL process is not running.
 Store the result in OUTPUT-JSON-SYMBOL and call
 COMPLETION-NOTIFICATION when done."
@@ -216,7 +226,7 @@ COMPLETION-NOTIFICATION when done."
   (let ((old-proc (symbol-value process-symbol)))
     ;; If the process is *not* running, start the async command
     (unless (process-live-p old-proc)
-      (apply #'teleport--tsh-cmd-async
+      (teleport--tsh-cmd-async
              output-json-symbol
              process-symbol
              completion-notification
@@ -236,10 +246,10 @@ Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
                                   completion-notification
-                                  teleport-shell-program
+                                  (append teleport-shell-program '(
                                   "ls"
                                   "-f"
-                                  "json"))
+                                  "json"))))
 
 (defvar teleport--logins-async-cache '(nil)
   "Cached hashtable of available teleport nodes.")
@@ -254,10 +264,10 @@ Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
                                   'teleport--logins-async-process
                                   completion-notification
-                                  teleport-shell-program
+                                  (append teleport-shell-program '(
                                   "status"
                                   "-f"
-                                  "json"))
+                                  "json"))))
 
 (defconst teleport--internal-join-login "-teleport-internal-join"
   "Teleport login used to observe an existing session.
