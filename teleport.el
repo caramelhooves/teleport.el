@@ -492,7 +492,7 @@ The Node ID could be used to connect to the node: tsh ssh <user>@<node-id>"
   (let ((nodes-id
          (mapconcat #'identity (teleport-list-nodes--get-ids) " ")))
     (kill-new nodes-id)
-    (message "Copied node ID %s to the kill ring" nodes-id)))
+    (message "Copied nodes ID \"%s\" to the kill ring" nodes-id)))
 
 (defun teleport-list-nodes-mode--mark-for-command ()
   "Mark the current node for a command."
