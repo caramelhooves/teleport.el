@@ -95,29 +95,46 @@ Should be set before calling `teleport-tramp-add-method'."
 (defvar-local teleport-list-nodes--default-directory nil)
 
 (defvar-local teleport-list-nodes--filter-by-pattern '())
+
+(defun teleport--get-shell-program ()
+  "Return the shell program as a string.
+Extract the program name from `teleport-shell-program'."
+  (if (stringp teleport-shell-program)
+      teleport-shell-program
+    (car teleport-shell-program)))
+
+(defun teleport--get-shell-args ()
+  "Return the shell arguments as a list.
+Extract additional arguments from `teleport-shell-program'.
+Returns nil if `teleport-shell-program' is a string."
+  (when (listp teleport-shell-program)
+    (cdr teleport-shell-program)))
+
+(defun teleport--get-shell-program-with-args ()
+  "Return the shell program with arguments as a list.
+Normalize `teleport-shell-program' to always return a list."
+  (if (listp teleport-shell-program)
+      teleport-shell-program
+    (list teleport-shell-program)))
+
 ;;;###autoload
 (defun teleport-tramp-add-method ()
   "Add teleport tramp method."
-
-  (let (teleport--shell-program teleport--shell-args)
-  (cond
-   ((stringp teleport-shell-program) (setq teleport--shell-program teleport-shell-program ))
-   ((listp teleport-shell-program) (setq teleport--shell-program (car teleport-shell-program)
-                                         teleport--shell-args (list (cdr teleport-shell-program))))
-   (t (error "teleport-shell-program should be either a string or a list of strings")))
-
-  (add-to-list
-   'tramp-methods
-   `(,teleport-tramp-method
-     (tramp-login-program ,teleport--shell-program)
-     (tramp-direct-async t)
-     (tramp-login-args (,@teleport--shell-args ("ssh") ("-l" "%u") ("%h")))
-     (tramp-copy-program ,teleport--shell-program)
-     (tramp-copy-args (,@teleport--shell-args ("scp") ("--preserve")))
-     (tramp-copy-keep-date t)
-     (tramp-remote-shell ,tramp-default-remote-shell)
-     (tramp-remote-shell-args ("-i" "-c"))))
-  (tramp-set-completion-function
+  (let* ((program (teleport--get-shell-program))
+         (args (teleport--get-shell-args))
+         (shell-args (when args (list args))))
+    (add-to-list
+     'tramp-methods
+     `(,teleport-tramp-method
+       (tramp-login-program ,program)
+       (tramp-direct-async t)
+       (tramp-login-args (,@shell-args ("ssh") ("-l" "%u") ("%h")))
+       (tramp-copy-program ,program)
+       (tramp-copy-args (,@shell-args ("scp") ("--preserve")))
+       (tramp-copy-keep-date t)
+       (tramp-remote-shell ,tramp-default-remote-shell)
+       (tramp-remote-shell-args ("-i" "-c"))))
+    (tramp-set-completion-function
      teleport-tramp-method '((teleport-tramp-completion "")))))
 
 (defun teleport--tsh-sentinel (process event)
@@ -246,10 +263,8 @@ Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
                                   completion-notification
-                                  (append teleport-shell-program '(
-                                  "ls"
-                                  "-f"
-                                  "json"))))
+                                  (append (teleport--get-shell-program-with-args)
+                                          '("ls" "-f" "json"))))
 
 (defvar teleport--logins-async-cache '(nil)
   "Cached hashtable of available teleport nodes.")
@@ -264,10 +279,8 @@ Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--logins-async-cache
                                   'teleport--logins-async-process
                                   completion-notification
-                                  (append teleport-shell-program '(
-                                  "status"
-                                  "-f"
-                                  "json"))))
+                                  (append (teleport--get-shell-program-with-args)
+                                          '("status" "-f" "json"))))
 
 (defconst teleport--internal-join-login "-teleport-internal-join"
   "Teleport login used to observe an existing session.
@@ -502,7 +515,7 @@ The Node ID could be used to connect to the node: tsh ssh <user>@<node-id>"
   (dolist (node-id nodes)
     (let* ((shell-command-buffer-name (format teleport-shell-command-buffer-name node-id))
            (shell-command-buffer-name-async shell-command-buffer-name))
-      (shell-command (format "tsh ssh %s@%s '%s' &" (tramp-find-user teleport-tramp-method nil node-id) node-id command)
+      (shell-command (format "%s ssh %s@%s '%s' &" (string-join (teleport--get-shell-program-with-args) " ") (tramp-find-user teleport-tramp-method nil node-id) node-id command)
                      shell-command-buffer-name
                      shell-command-buffer-name))))
 
