@@ -503,8 +503,8 @@ If no nodes are tagged, return node at point"
            (save-excursion (goto-char (point-min))
                            (cl-loop
                             while (re-search-forward re nil 'noerror)
-                            collect (tabulated-list-get-id)))))
-      (or tagged-nodes (list (tabulated-list-get-id))))))
+                            collect (teleport-list--get-hostname)))))
+      (or tagged-nodes (list (teleport-list--get-hostname))))))
 
 (defun teleport-list-nodes-mode--copy-nodes-id ()
   "Copy the IDs of the tagged nodes to the kill ring.
