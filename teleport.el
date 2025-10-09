@@ -6,8 +6,8 @@
 ;; Author: Caramel Hooves <caramel.hooves@protonmail.com>
 ;; Maintainer: Caramel Hooves <caramel.hooves@protonmail.com>
 ;; Created: March 18, 2023
-;; Modified: March 19, 2023
-;; Version: 0.0.1
+;; Modified: October 7, 2025
+;; Version: 0.0.2
 ;; Keywords: tools
 ;; Homepage: https://github.com/caramelhooves/teleport.el
 ;; Package-Requires: ((emacs "28.1") (dash "2.18.0"))
@@ -91,6 +91,27 @@ Should be set before calling `teleport-tramp-add-method'."
   "The location of tsh configuration files, usually ~/.tsh."
   :group 'teleport
   :type 'string)
+
+(defcustom teleport-prefer-hostname 't
+  "Prefer to use hostname over UUID.
+Nodes on teleport are identified by UUID, those UUID change every time
+the host reconnects. If you have multiple hosts with unique names, it
+might be nicer to use hostname instead of UUID when connecting via
+tramp.
+
+always - always use hostname, even if not unique (don't know
+why you want that, will probably break teleport)
+
+t - use hostname if unique, UUID otherwise. `teleport-list-nodes-mode'
+checks for uniqueness once, when opening a connection. If a second
+host with the same hostname shows up after that, might break.
+
+nil - always use UUID, safest choice, but looks ugly and hard to guess
+which host you are in based on path"
+  :group 'teleport
+  :type '(choice (const :tag "Always use UUID" nil)
+          (const :tag "Use UUID if hostname is not unique" t)
+          (const :tag "Always use hostname" always)))
 
 (defvar-local teleport-list-nodes--default-directory nil)
 
@@ -551,9 +572,23 @@ contains newlines, replace them with backquoted \\n"
 
 (defun teleport-list--get-hostname (&optional pos)
     "Return the hostname of the node at POS.
-It is assumed that the first column contains the hostname.
-See `teleport-list-nodes-hostname-column'"
-     (elt (tabulated-list-get-entry pos) 0))
+The returned string could be used as a hostname in every tsh command. It
+might be node UUID or a hostname, depending on the state of
+`teleport-prefer-hostname' and uniqueness of the hostname.
+
+It is assumed that the first column in
+`teleport-list-nodes-hostname-column' is the hostname"
+    (let ((hostname (elt (tabulated-list-get-entry pos) 0)))
+      (if (or (equal teleport-prefer-hostname 'always)
+              (and teleport-prefer-hostname (teleport-list--hostname-uniq-p hostname)))
+          hostname
+          (tabulated-list-get-id pos))))
+
+(defun teleport-list--hostname-uniq-p (hostname)
+  "Return t if HOSTNAME is unique in `tabulated-list-entries'."
+  (= 1 (cl-loop
+              for elem in tabulated-list-entries
+              count (string= (elt (cadr elem) 0) hostname))))
 
 (defun teleport-list--nodes-mode-entries (nodes list-format)
   "Generate a value suitable for `tabulated-list-entries'.
@@ -561,7 +596,7 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
   (cl-loop
    for node across nodes
    for spec = (gethash "spec" node)
-   for name = (gethash "name" (gethash "metadata" node))
+   for name = (teleport-list--get-node-label node '("metadata" "name"))
    collect (list
             name
             (apply
@@ -603,12 +638,13 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
                              (setq switch-default-directory t)))
                          teleport-list-nodes-mode-map)
     (when switch-default-directory
-      (let ((node-id (tabulated-list-get-id)) (hostname (teleport-list--get-hostname)))
+      (let ((hostname-or-node-id (teleport-list--get-hostname))
+            (hostname (elt (tabulated-list-get-entry) 0)))
         (setq-local default-directory
                     (format "/%s:%s@%s:"
                             teleport-tramp-method
                             (tramp-find-user teleport-tramp-method nil hostname)
-                            node-id))))))
+                            hostname-or-node-id))))))
 
 
 (defun teleport--list-clusters ()
