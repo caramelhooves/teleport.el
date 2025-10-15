@@ -614,10 +614,10 @@ Extract the values of the properties specified in LIST-FORMAT from NODES."
     (let ((pstatus (process-status process)))
       (propertize
        (cond
-        ((memq pstatus '(run open listen connect stop)) ":Nodes(Running)")
         ((memq pstatus '(signal)) ":Nodes(Signal)")
         ((and (memq pstatus '(exit)) (= 0 (process-exit-status process))) ":Nodes")
         ((and (memq pstatus '(exit failed)) (/= 0 (process-exit-status process))) ":Nodes(Error)")
+        ((memq pstatus '(run open listen connect stop)) (format ":Running, PID %d" (process-id process)))
         (t ":Nodes(Unknown State)" ))
        'mouse-face 'mode-line-highlight
        'help-echo (format "mouse-1: Open process error buffer")
