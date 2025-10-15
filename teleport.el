@@ -253,16 +253,17 @@ terminates, call COMPLETION-NOTIFICATION."
 
 (defun teleport--tsh-cmd-async-cached (output-json-symbol process-symbol completion-notification cmd)
   "Start CMD asynchronously if PROCESS-SYMBOL process is not running.
-Store the result in OUTPUT-JSON-SYMBOL and call
-COMPLETION-NOTIFICATION when done."
+If the process is running, kill it and start again. Store the result in
+OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when done."
 
   (unless completion-notification
     (setq completion-notification
           (lambda () (message "Teleport cmd done: %s" cmd))))
 
   (let ((old-proc (symbol-value process-symbol)))
-    ;; If the process is *not* running, start the async command
-    (unless (process-live-p old-proc)
+    ;; If the process is running, kill it and try again
+    (if (process-live-p old-proc)
+        (kill-process old-proc))
       (teleport--tsh-cmd-async
              output-json-symbol
              process-symbol
@@ -278,7 +279,7 @@ COMPLETION-NOTIFICATION when done."
 
 (defun teleport--get-nodes-async-cached
     (&optional completion-notification)
-  "Return cached list of teleport nodes.
+  "Return a list of teleport nodes.
 Call COMPLETION-NOTIFICATION when a new list is available."
   (teleport--tsh-cmd-async-cached 'teleport--nodes-async-cache
                                   'teleport--nodes-async-process
