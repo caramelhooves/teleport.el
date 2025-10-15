@@ -216,7 +216,6 @@ EVENT is the event that caused the process to exit."
   (with-current-buffer (process-buffer process)
     (cond
      ((string= event "finished\n")
-      (delete-windows-on (current-buffer) 't)
       (kill-buffer))
      (t
       (message "Teleport stderr helper process failed: %s, %s"
