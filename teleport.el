@@ -262,13 +262,14 @@ OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when done."
 
   (let ((old-proc (symbol-value process-symbol)))
     ;; If the process is running, kill it and try again
-    (when (process-live-p old-proc)
-      (kill-process old-proc)))
-  (teleport--tsh-cmd-async output-json-symbol
-                           process-symbol
-                           completion-notification
-                           cmd)
-  (symbol-value output-json-symbol))
+    (if (process-live-p old-proc)
+        (kill-process old-proc))
+      (teleport--tsh-cmd-async
+             output-json-symbol
+             process-symbol
+             completion-notification
+             cmd)
+  (symbol-value output-json-symbol)))
 
 (defvar teleport--nodes-async-cache []
   "Cached vector of teleport nodes.")
