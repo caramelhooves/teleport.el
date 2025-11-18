@@ -268,8 +268,8 @@ OUTPUT-JSON-SYMBOL and call COMPLETION-NOTIFICATION when done."
              output-json-symbol
              process-symbol
              completion-notification
-             cmd)))
-  (symbol-value output-json-symbol))
+             cmd)
+  (symbol-value output-json-symbol)))
 
 (defvar teleport--nodes-async-cache []
   "Cached vector of teleport nodes.")
